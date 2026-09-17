@@ -1,0 +1,204 @@
+# ===========================================================================
+#  高校实验室资产与报修管理平台 —— 一键起全套环境
+#
+#    docker compose up -d
+#    docker compose ps
+#    → 浏览器打开 http://localhost ，用 labadmin / admin123 登录
+#
+#   服务           镜像 / 构建源             端口
+#   ------------   ----------------------   ----
+#   mysql          mysql:8.0                3306
+#   redis          redis:7-alpine           6379
+#   lab-backend    ./RuoYi-Vue-fast         8080
+#   lab-frontend   ./RuoYi-Vue3             80
+#
+#  密码一律从 .env 读取（cp .env.example .env 后按需修改；.env 已被 .gitignore 忽略，
+#  绝不入库）。所有变量都写了 ${VAR:-默认值}，所以不建 .env 也能起来 ——
+#  但那套默认值只适合本地自己玩，生产必须覆盖。
+#
+#  生产 / 类生产：再叠一层覆盖文件（去掉端口暴露、加资源上限与日志轮转）
+#    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ===========================================================================
+
+name: lab-asset
+
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL 8：首次启动时按显式顺序导入全部 SQL
+  # 顺序问题的解法见 deploy/mysql-init.sh 头部说明（本卡最容易翻车的一环）
+  # ---------------------------------------------------------------------------
+  mysql:
+    # 锁定 8.0，不要写 latest：latest 已指向 8.4/9.x，移除了
+    # --default-authentication-plugin，且默认认证插件变化会影响旧版驱动。
+    image: mysql:8.0
+    container_name: lab-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-education_system}
+      TZ: Asia/Shanghai
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_general_ci"
+      # 用数字偏移而不是 Asia/Shanghai：MySQL 的命名时区要求先导入时区表
+      # （mysql_tzinfo_to_sql），容器里没有——写名字会直接启动失败报 Unknown time zone。
+      # 这一项必须设：运维看板按日期聚合，MySQL 留在 UTC 会让「今日 / 近 7 天」整体偏移。
+      - "--default-time-zone=+08:00"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # SQL 脚本目录（只读），供 00-init.sh 逐个导入
+      - ./RuoYi-Vue-fast/sql:/sql:ro
+      # 【关键】只挂这一个显式排序的脚本，**不要**把 .sql 直接挂进 initdb 目录：
+      # 官方镜像按文件名字母序执行，laboratory_* 会排在 ry_20260417.sql 之前，
+      # 结果每个脚本都报「表不存在」。
+      - ./deploy/mysql-init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+    healthcheck:
+      # $$ 是 compose 的转义：传给容器的是 $MYSQL_ROOT_PASSWORD，由容器内 shell 展开。
+      # 用 -h 127.0.0.1 而不是默认 socket：initdb 阶段临时 server 只开 socket，
+      # 因此这个探测天然只在「真正初始化完毕、正式 server 起来」之后才会通过。
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    restart: unless-stopped
+    networks: [lab-net]
+
+  # ---------------------------------------------------------------------------
+  # Redis 7：若依强制依赖（验证码、令牌缓存都走它）
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: lab-redis
+    command:
+      - redis-server
+      - "--requirepass"
+      - "${REDIS_PASSWORD:-123456}"
+      # 持久化：若依用 Redis 存验证码与登录态缓存。
+      # （这也是本项目在《CI/CD 部署方案》里不选蓝绿发布的原因之一——
+      #  切流会因缓存不共享导致全员掉线。）
+      - "--appendonly"
+      - "yes"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-123456}
+      TZ: Asia/Shanghai
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      # --no-auth-warning 需要 redis 6+（这里是 7），免得日志被警告刷屏
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    restart: unless-stopped
+    networks: [lab-net]
+
+  # ---------------------------------------------------------------------------
+  # 后端：Spring Boot 单体 jar，端口 8080
+  # 镜像内的 ENTRYPOINT 是 exec 形式，所有环境差异都由下面这些变量注入
+  # ---------------------------------------------------------------------------
+  lab-backend:
+    build:
+      context: ./RuoYi-Vue-fast
+      dockerfile: Dockerfile
+    image: lab-asset-backend:local
+    container_name: lab-backend
+    # 【重要】depends_on 只写服务名 = 只保证「启动顺序」，不保证 MySQL 已经能接受连接。
+    # 必须用长格式的 condition: service_healthy 才是「等它真的健康」；
+    # 少了 condition，后端会在 MySQL 仍在初始化时就连库失败、直接退出。
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Shanghai
+
+      # ---- 数据源（application-druid.yml 已写成 ${RUOYI_DB_*:默认值}）----
+      RUOYI_DB_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-education_system}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true"
+      RUOYI_DB_USERNAME: ${MYSQL_USERNAME:-root}
+      RUOYI_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+
+      # ---- Redis ----
+      # ⚠ application.yml 里 spring.redis.host / port 是**写死的**
+      #   localhost / 6379，没有 ${} 占位符，也不在任务卡列的 RUOYI_* 清单里。
+      #   容器里 localhost 指向后端自己，不覆盖必然连不上（症状：能启动、
+      #   /captchaImage 报 Redis 连接异常、登录页永远出不来验证码）。
+      #   解法：用 Spring Boot 原生的 SPRING_REDIS_HOST / SPRING_REDIS_PORT。
+      #   relaxed binding 会把 OS 环境变量映射到同名配置键，且优先级**高于**
+      #   application.yml（Spring Boot 官方属性源顺序：OS 环境变量 > 应用配置文件），
+      #   所以不需要改任何配置文件，与「环境差异一律走环境变量」的边界一致。
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: "6379"
+      RUOYI_REDIS_PASSWORD: ${REDIS_PASSWORD:-123456}
+
+      # ---- 令牌密钥 ----
+      # 默认值是弱密钥（已知偏移 D-08）。本地演示可接受，生产必须在 .env 覆盖。
+      RUOYI_TOKEN_SECRET: ${TOKEN_SECRET:-change-me-in-production}
+
+      # ---- 上传目录 ----
+      # application.yml 里 ruoyi.profile 写死成 Windows 路径 D:/ruoyi/uploadPath，
+      # 容器里根本不存在。relaxed binding 把 RUOYI_PROFILE 映射到 ruoyi.profile 覆盖它。
+      # 不覆盖的症状很隐蔽：直到第一次上传资产图片 / 故障照片才暴露。
+      RUOYI_PROFILE: /home/ruoyi/uploadPath
+
+      # ---- 容器环境不暴露接口文档 ----
+      RUOYI_SWAGGER_ENABLED: "false"
+
+      # ---- Druid 监控台账号（/druid）----
+      RUOYI_DRUID_USERNAME: ${DRUID_USERNAME:-ruoyi}
+      RUOYI_DRUID_PASSWORD: ${DRUID_PASSWORD:-123456}
+
+      # JVM 参数走 JAVA_TOOL_OPTIONS：Dockerfile 的 ENTRYPOINT 是 exec 形式
+      # （java 直接做 PID 1，便于优雅停机），塞不进 shell 变量；
+      # 而 JAVA_TOOL_OPTIONS 是 JVM 原生识别的，正好补上这个位置。
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms256m -Xmx512m -Dfile.encoding=UTF-8}
+    volumes:
+      # 用**命名卷**而不是 bind mount：Docker 会用镜像里 /home/ruoyi/uploadPath
+      # 的属主（ruoyi:ruoyi）来初始化这个空卷，非 root 进程才写得进去。
+      # 换成挂宿主机目录，属主会变成宿主用户，容器内必然 Permission denied。
+      - upload-data:/home/ruoyi/uploadPath
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+    networks: [lab-net]
+
+  # ---------------------------------------------------------------------------
+  # 前端：nginx 托管 vite 产物，并把 /prod-api/ 反代到 lab-backend:8080
+  # 站点配置见 RuoYi-Vue3/nginx.conf（末尾斜杠不能漏，漏了所有接口 404）
+  # ---------------------------------------------------------------------------
+  lab-frontend:
+    build:
+      context: ./RuoYi-Vue3
+      dockerfile: Dockerfile
+    image: lab-asset-frontend:local
+    container_name: lab-frontend
+    depends_on:
+      - lab-backend
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks: [lab-net]
+
+volumes:
+  mysql-data:
+  redis-data:
+  upload-data:
+
+networks:
+  # 显式声明用户自定义网络：容器间用服务名互访（后端连 mysql/redis、
+  # nginx 连 lab-backend）依赖它的内嵌 DNS。
+  lab-net:
+    driver: bridge

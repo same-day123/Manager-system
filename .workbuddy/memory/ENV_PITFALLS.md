@@ -88,12 +88,47 @@
 - **CDP 的 `setTimeout` 必须 `clearTimeout`**（收到响应即清 + `timer.unref?.()`），否则事件循环被吊住、**进程 120s 不退出**，看起来像「被工具超时杀掉」；退出时 `taskkill /PID <pid> /T /F` 收拾 Chrome 进程树，否则留孤儿进程。
 - headless Chrome **偶发启动失败**（尤其连着起多个实例）→ **整批只起一次浏览器复用 session**，并给启动加换端口 + 换临时目录的重试。
 
+## 容器化 / Docker 编排（2026-09-17 T4，**本机无 Docker，全是离线踩出来的**）
+- **⚠️ MySQL 官方镜像按【文件名字母序】执行 `/docker-entrypoint-initdb.d/*`**：把 `sql/*.sql` 直挂进去 → `laboratory_*` 会全部排在 `ry_20260417.sql` 之前 → **每个脚本都报"表不存在"**。解法：只挂一个显式 `for` 循环的 `.sh`（`deploy/mysql-init.sh`）。**反向验证**：`t4_verify.py` 里有一条断言专门证实「字母序 ≠ 正确顺序」。
+- **⚠️ initdb 目录的 `.sh` 可能被 entrypoint `source` 进来**（无执行位时走 `. "$f"`）→ **`set -e` 会漏进 entrypoint 自己的 shell**，影响它后续流程。改用 `die()` 显式失败 + `exit 1`（在「被执行」与「被 source」两种情况下行为一致）。
+- **initdb 阶段 root 要不要口令，各镜像版本不一致** → 脚本里**先探测再决定**（先试免密、再试 `MYSQL_PWD`，都不通才 `die`），别写死 `-p"$MYSQL_ROOT_PASSWORD"`。
+- **口令用 `MYSQL_PWD` 环境变量传**，不用 `-p<password>`（后者会出现在进程列表里被 `ps` 看到，且口令含空格/特殊字符时有引号问题）。
+- **⚠️ nginx 配置文件不能有 UTF-8 BOM** —— 解析器直接拒绝加载（`unexpected "" in ...`）。同理 **`.sh` 的 BOM 会让 shebang 失效、CRLF 会让容器内 `/bin/sh` 报 `\r: not found`**。写文件后**逐字节核** `EF BB BF` 与 `0D 0A`（本机 Write 工具实测会带 BOM）。
+- **`client_max_body_size` 默认只有 `1m`**：本项目上传链路 前端 5MB／后端 10MB·20MB／**nginx 1m** —— 最紧的一环在最后面，**上传 1MB 以上图片被拦成 413 且请求根本不到后端**（后端日志干净、前端只说"上传失败"）。
+- **`proxy_pass http://host:8080/;` 末尾那个 `/` 决定前缀剥不剥**：带 `/` → `/prod-api/login` 转发成 `/login`；不带 → 原样转发 `/prod-api/login` → 后端 404。**症状离根因很远**。
+- **⚠️ compose 的 `ports` 合并规则是【拼接】不是覆盖** → 在 override 文件里**删不掉**基础文件的端口。要用 Compose **v2.24+ 的 `!override`** 标签（`ports: !override [...]`）。老版本不识别该标签会直接报错。
+- **MySQL 命名时区要先导时区表**：`--default-time-zone=Asia/Shanghai` 在容器里会**启动失败**（`Unknown or incorrect time zone`）→ 用**数字偏移** `+00:00`/`+08:00`。
+- **`useradd -m -u 1000 x` 不保证建同名组**（取决于 `/etc/login.defs` 的 `USERGROUPS_ENAB`）→ 后续 `chown x:x` 会以 "invalid group" 失败。**显式 `groupadd -g 1000 x && useradd -m -u 1000 -g 1000 x`**。
+- **上传目录用【命名卷】而不是 bind mount**：Docker 会用镜像内该目录的属主初始化空命名卷（ruoyi:ruoyi 得以保留）；bind mount 挂宿主目录 → 属主变成宿主用户 → 容器内非 root 进程必然 Permission denied。
+- **`depends_on` 只写服务名 = 只保证启动顺序**，不保证「MySQL 已能接受连接」→ 后端会在初始化期间连库失败直接退出。要长格式 `condition: service_healthy`。
+- **`.dockerignore` 不是可选项**：`RuoYi-Vue3/node_modules` 近 1.6 万文件，不排除会让 `docker build` 的 context 上传卡几分钟。
+- **改 `.gitignore` 时绝不能写 `.env.*`** —— 会连 `RuoYi-Vue3/.env.development|production|staging` 一起忽略掉，那三个是 **vite 构建期**配置（`VITE_APP_BASE_API` 在里面），一忽略前端构建的 API 前缀就错了。只精确忽略 `.env` 与 `.env.local`。**正反两面都要实测**：`git check-ignore -v .env` 命中、`git check-ignore -q RuoYi-Vue3/.env.production` 不命中。
+- **`quartz.sql` 是否需要**：读 `framework/config/ScheduleConfig.java` —— **整类被注释**且 `resources/` 下无 `quartz.properties` → Boot 默认 `RAMJobStore`，**不需要 `QRTZ_*` 表**。判「某个 sql 要不要跑」别只看文件名，要回去看配置。
+
+## 无 Docker 时怎么验容器化（2026-09-17 T4，**可复用**）
+两层，都放在 `.workbuddy/tools/`（**别放 `src/test`**，那是「测试负责」的领地）：
+1. **配置静态自洽性** `t4_verify.py`（94 条断言）：YAML 可解析（`!override` 要用自定义 multi-constructor 才不会误判成"解析失败"）／**SQL 顺序三方互校**（脚本 `for` 列表 ↔ 磁盘文件 ↔ 各脚本自带 `[N/7]` 标记）／环境变量插值后取值／`.env` 覆盖度／nginx 前缀与上传上限／Dockerfile 非 root 与健康检查／`.dockerignore` 正反两面／CI job 结构。
+   - **⚠️ 断言前必须剥整行注释**：注释里会引用被检查的字面量（Dockerfile 注释写「`npm ci` 会失败」→ 纯文本搜索会误判成"用了 npm ci"）。**这一条让第一版脚本报了 5 个假阳性。**
+   - **反复确认"事实"再写断言**：我自己两次把 `.m2` 路径写成 `org/springframework/spring-boot/...`（正确是 `org/springframework/boot/spring-boot/...`），得到 `exists()=False` 却以为是环境问题。
+2. **环境变量绑定实证** `t4_env_binding_check.py` + `T4EnvBindingProbe.java`（23 条断言）：加载**真实的** `application*.yml`，用 Spring **真实属性源机制**（配置文件 `addLast` 追加 = **最低优先级**，与 Boot 一致），跑**两套不同取值对照**：
+   - `raw:` 视图（剥掉 `systemEnvironment`/`systemProperties`）= **证明配置文件没被改过**；
+   - `eff:` 视图（完整属性源）= **证明环境变量覆盖生效**；
+   - 对照场景取值全换掉（`redis` → `redis-alt`、`6379` → `6381`）= **排除"碰巧相等"**；
+   - 再用 `Binder` 把 `spring.redis` 整块绑成 **`RedisProperties`**，证明 `port` 转 int、`timeout: 10s` 转 `Duration`。
+   - jar（手拼 classpath，本机无 `maven-dependency-plugin`）：`spring-boot-2.5.15`、`spring-boot-autoconfigure-2.5.15`、`spring-core/beans/context/expression/jcl-5.3.39`、`snakeyaml-1.28`、`slf4j-api-1.7.36`；命令 `java -Dfile.encoding=UTF-8 -cp "<classes>;<jars>" T4EnvBindingProbe RuoYi-Vue-fast/src/main/resources/`。
+   - **环境变量用 `subprocess` 的 `env=` 传**（`SystemEnvironmentPropertySource` 读的是 `System.getenv()`，Java 进程内改不了，必须真给进程设）。
+
 ## 联调环境端口坑（2026-09-17 实测）
 - **80 端口被 Steam++.Accelerator 占用** → dev server 改 `--port 5173`。
 - **后端会绑到 6716 并启动失败**（6716 被 WorkBuddy 自身进程占）→ 启动参数显式加 `--server.port=8080`（**命令行参数优先级最高**）。vite 的 `/dev-api` 代理目标写死 `localhost:8080`，**后端必须落这个端口**。
 
 ## Shell / 工具坑
 - **Git Bash 的 PATH 反复损坏**（`ls`/`dirname`/`head`/`find` 全 command not found）→ 改用 Glob/Grep/Read 专用工具，或 PowerShell `Out-File -Encoding utf8` 落盘再 Read（**PowerShell stdout 也常不返回**，务必落盘）。
+- **⭐ Git Bash 自救写法（2026-09-17 实测可用，比切 PowerShell 更省事）**：Bash 工具里命令前加一句
+  `export PATH="/c/Users/王旻辉/.workbuddy/binaries/PortableGit/versions/1.2.0/bin:/usr/bin:/bin:$PATH"`
+  之后 `ls` / `cat` / `find` / `grep` / `git` / `python` 全部恢复。**这一招让"只能靠 Read/Glob"的场景重新能用 shell 批处理**（本次统计 12 个文件行数、批量查 BOM 都靠它）。
+- **Python 缺 `yaml` 时**：托管解释器 `C:\Users\王旻辉\.workbuddy\binaries\python\versions\3.13.12\python.exe` **不带用不了的包**，但**能联网装** —— venv 已在 `...\python\envs\default`，直接 `...\envs\default\Scripts\python.exe -m pip install --quiet pyyaml` 即可（实测装上 6.0.3）。**别去动系统 Python**。
+- **本机 `java`/`javac` 是 JDK 21**（`JAVA_HOME` 指向 jdk-17.0.19）—— 跑 Spring 5.3.39 / Boot 2.5.15 的**轻量探针**（`StandardEnvironment`、`Binder`、`YamlPropertySourceLoader`）没问题，不需要降版本。
 - **⚠️ PowerShell 会吞掉 `node` 的 stdout 与 stderr**（2026-09-17 实测，代价：排查 4 轮）：`& node xxx.mjs` 在工具里只回一句「Command completed with exit code 0」，**报错一个字都看不到**；`Start-Process -RedirectStandardOutput/-RedirectStandardError` 拿到的**两个文件都是空的**。
   → **排查本机脚本问题的第一件事：让脚本自己把结果写进 UTF-8 文件**（`say()` 双写 console + 文件，并把 `main()` 包进 `try/catch/finally`，异常也写进去）。本次就是靠这个才拿到真正的 `ReferenceError: ROOT is not defined`。
   → 拿不到的应急手段：`$x = (& node ... 2>&1 | Out-String)` 再用 `[System.IO.File]::WriteAllText($p, $x, (New-Object System.Text.UTF8Encoding($false)))` 落盘。

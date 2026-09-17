@@ -18,6 +18,10 @@ build/
 .vite/
 *.jar.original
 *.war
+*.class
+
+# 工具脚本的编译产物（.workbuddy/tools 下的 Java 探针 class 输出）
+.workbuddy/tools/t4probe-classes/
 
 ######################################################################
 # 前端依赖
@@ -52,3 +56,14 @@ desktop.ini
 ######################################################################
 # 敏感配置：如需提交请改用环境变量覆盖
 # 参考 application.yml 里的 ${RUOYI_DB_PASSWORD:} / ${RUOYI_TOKEN_SECRET:}
+
+######################################################################
+# 容器编排的密码文件（docker-compose.yml 从 .env 读取）
+# 模板已提交：.env.example
+#
+# ⚠ 绝不要写成 `.env.*` —— 那个通配符会把 RuoYi-Vue3/.env.development、
+#   .env.production、.env.staging 一起忽略掉。那三个是 vite 的**构建期**配置，
+#   必须入库，否则前端构建出来的 API 前缀就错了。
+#   下面只精确忽略名叫 `.env` 与 `.env.local` 的文件。
+.env
+.env.local

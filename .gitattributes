@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# 行尾约定
+#
+# 【为什么必须显式声明】本仓库本机 `core.autocrlf=true`，且此前没有
+# .gitattributes —— 也就是说 **在 Windows 上 checkout/clone 出来的文件是 CRLF**。
+# 容器化交付里有几类文件一旦变成 CRLF 会直接坏掉，而且症状离根因很远：
+#
+#   *.sh              被挂进 /docker-entrypoint-initdb.d，由**容器内的 /bin/sh**执行
+#                     → CRLF 会报 `\r: not found`，**数据库初始化静默失败**
+#                       （容器起来了、表却是空的）
+#   nginx.conf        容器内 nginx 读取 → 行尾残留的 \r 会污染指令
+#   Dockerfile        RUN 的续行符 `\` 后面若跟一个 \r，该行就续不上了
+#   docker-compose*.yml / .env
+#                     YAML 与 dotenv 解析可能把 \r 带进变量值里
+#                     （例如口令末尾多一个 \r，表现成"密码错误"，极难查）
+#
+# 【范围刻意收窄】只锁下面这几类，**不动** *.java / *.vue / *.md / *.sql ——
+# 一次全仓重规范化会产生几千行的无意义 diff，把真正的改动淹没。
+# 新增容器相关文件时记得回来补一条。
+#
+# 查当前行尾：git ls-files --eol <file>
+#             i/ 是索引里的、w/ 是工作区的；两者都应为 lf。
+# ---------------------------------------------------------------------------
+
+# Shell 脚本：容器内执行，必须 LF
+*.sh                  text eol=lf
+
+# Docker 构建与编排
+Dockerfile            text eol=lf
+*.dockerignore        text eol=lf
+docker-compose*.yml   text eol=lf
+
+# 容器内 nginx 站点配置
+RuoYi-Vue3/nginx.conf text eol=lf
+
+# 编排口令模板（会被复制成 .env，CRLF 会把 \r 带进口令值）
+/.env.example         text eol=lf

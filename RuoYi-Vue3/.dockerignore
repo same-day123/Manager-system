@@ -1,0 +1,25 @@
+# 前端构建上下文排除清单
+#
+# 【这条不是可选项】RuoYi-Vue3/node_modules 有近 1.6 万个文件，
+# 不排除的话 docker build 光是上传 context 就要几分钟甚至超时。
+
+# ---- 依赖与构建产物 ----
+node_modules/
+dist/
+.vite/
+
+# ---- 版本控制与 IDE ----
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+
+# ---- 本地开发日志（仓库里真实存在 vite-dev.log / vite-dev.err.log）----
+*.log
+
+# ---- 文档（镜像里用不到；LICENSE 保留，部分工具链会读）----
+README.md
+
+# 注意：不要排除 .env / .env.production —— vite build 依赖它们决定 API 前缀
+# 以及是否开启 gzip 预压缩（VITE_BUILD_COMPRESS=gzip，与 nginx 的 gzip_static 配套）。

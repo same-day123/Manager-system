@@ -1,0 +1,38 @@
+# 后端构建上下文排除清单
+#
+# 目的：让 docker build 传给 daemon 的 context 尽量小、且可复现。
+# 只保留 Dockerfile 真正需要的东西：pom.xml + src/ + .mvn（若存在）。
+
+# ---- 构建产物 ----
+target/
+*.jar
+*.war
+*.jar.original
+
+# ---- 日志 ----
+*.log
+logs/
+
+# ---- 版本控制与 IDE ----
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# ---- 数据库脚本 ----
+# sql/ 由 mysql 容器的只读挂载（./RuoYi-Vue-fast/sql:/sql:ro）导入，
+# 后端运行时完全用不到，不进镜像。
+sql/
+
+# ---- 文档 ----
+README.md
+
+# ---- 本机脚本与临时产物 ----
+deploy/
+*.bat
+*.ps1

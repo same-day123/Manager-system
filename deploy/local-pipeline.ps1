@@ -344,22 +344,43 @@ Invoke-Stage -Index 4 -Name '打包产物' -Body {
 
 # ---- [5/6] 镜像构建（无 Docker 则跳过） ------------------------------------
 Invoke-Stage -Index 5 -Name '镜像构建' -Body {
-    $dockerfile = Join-Path $BackDir 'Dockerfile'
+    # 与 ci.yml 的 job: docker 逐项对齐：后端镜像 → 前端镜像 → compose 语法门禁。
+    # 全程只 build 不推送 registry（仓库 Token 已吊销，答辩用本地镜像足够）。
+    $backDockerfile  = Join-Path $BackDir 'Dockerfile'
+    $frontDockerfile = Join-Path $FrontDir 'Dockerfile'
+
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-        return @('SKIPPED', '跳过原因: 本机未安装 Docker —— 镜像构建在 GitHub Actions 上执行')
+        return @('SKIPPED',
+                 '跳过原因: 本机未安装 Docker —— 镜像构建在 GitHub Actions 的 job: docker 上执行',
+                 '注: 容器化交付物的静态校验由工具脚本另行完成，不依赖 Docker')
     }
-    if (-not (Test-Path $dockerfile)) {
-        return @('SKIPPED', '跳过原因: 尚未产出 RuoYi-Vue-fast/Dockerfile（T4「容器化交付」卡）')
+    if (-not (Test-Path $backDockerfile)) {
+        return @('SKIPPED', '跳过原因: 缺少 RuoYi-Vue-fast/Dockerfile（T4「容器化交付」卡交付物）')
     }
+    if (-not (Test-Path $frontDockerfile)) {
+        return @('SKIPPED', '跳过原因: 缺少 RuoYi-Vue3/Dockerfile（T4「容器化交付」卡交付物）')
+    }
+
+    $log = "$Base.stage5.log"
+    $out = @()
     Push-Location $Root
     try {
-        & docker build -t lab-asset-backend:ci ./RuoYi-Vue-fast 2>&1 | Out-File -Encoding utf8 "$Base.stage5.log"
-        $code = $LASTEXITCODE
+        foreach ($img in @(@('lab-asset-backend:ci',  './RuoYi-Vue-fast'),
+                           @('lab-asset-frontend:ci', './RuoYi-Vue3'))) {
+            $out += "命令: docker build -t $($img[0]) $($img[1])"
+            & docker build -t $img[0] $img[1] 2>&1 | Out-File -Encoding utf8 -Append $log
+            if ($LASTEXITCODE -ne 0) {
+                throw "docker build $($img[0]) 失败（exit=$LASTEXITCODE）；完整输出见 $log"
+            }
+            $out += ">> 镜像: $($img[0])"
+        }
+        & docker compose -f docker-compose.yml config --quiet 2>&1 | Out-File -Encoding utf8 -Append $log
+        if ($LASTEXITCODE -ne 0) { throw "docker compose config 校验失败；完整输出见 $log" }
+        $out += '>> docker compose -f docker-compose.yml config --quiet  通过'
     } finally {
         Pop-Location
     }
-    if ($code -ne 0) { throw "docker build 失败（exit=$code）" }
-    @('>> 镜像: lab-asset-backend:ci')
+    $out
 }
 
 # ---- [6/6] 冒烟测试（连不上或非本流水线启动的服务则跳过） ------------------

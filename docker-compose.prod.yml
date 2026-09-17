@@ -1,0 +1,98 @@
+# ===========================================================================
+#  生产 / 类生产环境覆盖文件
+#
+#   用法：
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+#   这份文件存在的意义，就是把《CI/CD 部署方案》里「开发 / 类生产 / 生产
+#   三环境配置差异」那张表**变成可执行的东西**，而不是只在文档里描述一遍。
+#
+#   与基础文件的差异（逐条对应那张表）
+#     1. 不向公网暴露 MySQL / Redis（只绑回环，留给运维上机排查）；
+#        后端也只绑回环 —— 外部流量一律经 nginx 的 /prod-api/ 进来。
+#     2. 重启策略 raise 到 always；资源与日志都加上限，避免单机被一个容器吃光。
+#     3. 容器内关闭接口文档（RUOYI_SWAGGER_ENABLED=false），
+#        Durid 监控台账号强制由 .env 提供（不再有 123456 兜底）。
+#
+#   ⚠ 需要 Docker Compose v2.24+：下面用 `!override` 标签【替换】而不是【追加】
+#     ports。Compose 对 ports 这类多值字段的默认合并规则是"拼接"，不替换的话
+#     基础文件里的 3306:3306 依旧生效。老版本 Compose 会因不识别该标签而报错，
+#     此时退路是直接把基础文件里对应服务的 ports 段删掉。
+# ===========================================================================
+
+services:
+  mysql:
+    ports: !override
+      # 只绑回环：给运维上机用 mysql 客户端排查，不对公网开放
+      - "127.0.0.1:3306:3306"
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_general_ci"
+      - "--default-time-zone=+08:00"
+      # 生产再收一点：不记录非 root 的慢查询到表里，减少写入
+      - "--max-connections=200"
+      - "--slow_query_log=1"
+      - "--long_query_time=1"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    ports: !override
+      - "127.0.0.1:6379:6379"
+    # Redis 不像 MySQL 有 maxmemory 之外的手段，显式限制 + 淘汰策略，
+    # 避免若依缓存涨满把宿主机内存吃光。
+    command:
+      - redis-server
+      - "--requirepass"
+      - "${REDIS_PASSWORD:?生产环境必须在 .env 里设置 REDIS_PASSWORD}"
+      - "--appendonly"
+      - "yes"
+      - "--maxmemory"
+      - "256mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  lab-backend:
+    ports: !override []
+    environment:
+      # 生产关掉接口文档；Druid 口令不再有兜底默认值
+      RUOYI_SWAGGER_ENABLED: "false"
+      RUOYI_DRUID_PASSWORD: "${DRUID_PASSWORD:?生产环境必须在 .env 里设置 DRUID_PASSWORD}"
+      RUOYI_TOKEN_SECRET: "${TOKEN_SECRET:?生产环境必须在 .env 里设置 TOKEN_SECRET}"
+      RUOYI_DB_PASSWORD: "${MYSQL_ROOT_PASSWORD:?生产环境必须在 .env 里设置 MYSQL_ROOT_PASSWORD}"
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  lab-frontend:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

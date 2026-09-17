@@ -35,8 +35,15 @@
 ```
 Manager_system/
 ├── .github/workflows/ci.yml              GitHub Actions 流水线定义
-├── deploy/local-pipeline.ps1             本地等价流水线（6 阶段，与 ci.yml 一一对应）
+├── deploy/
+│   ├── local-pipeline.ps1                本地等价流水线（6 阶段，与 ci.yml 一一对应）
+│   └── mysql-init.sh                     容器首次启动时按显式顺序导入 SQL
+├── docker-compose.yml                    一键起全套环境（mysql / redis / 后端 / 前端）
+├── docker-compose.prod.yml               生产覆盖层：去掉端口暴露、加资源与日志上限
+├── .env.example                          编排口令模板（复制成 .env 后使用，.env 不入库）
 ├── RuoYi-Vue-fast/                      后端
+│   ├── Dockerfile                        后端镜像（两段式 maven → JRE 8，非 root 运行）
+│   ├── .dockerignore
 │   ├── sql/                             数据库初始化脚本（可重复执行，见下文执行顺序）
 │   └── src/main/
 │       ├── java/com/ruoyi/
@@ -51,6 +58,9 @@ Manager_system/
 │           ├── system/                  若依原生 Mapper XML
 │           └── laboratory/              ★ 自定义 Mapper XML
 └── RuoYi-Vue3/                          前端
+    ├── Dockerfile                        前端镜像（node 构建 → nginx 托管）
+    ├── nginx.conf                        容器内站点配置（/prod-api/ 反代并剥离前缀）
+    ├── .dockerignore
     └── src/
         ├── api/laboratory/              ★ 自定义接口封装
         ├── views/laboratory/            ★ 自定义页面（room / asset / repair）
@@ -183,9 +193,9 @@ java -jar target/ruoyi.jar
 
 ```bash
 cd RuoYi-Vue3
-npm install
-npm run dev          # http://localhost
-npm run build:prod   # 产物 dist/
+yarn install         # 仓库里只有 yarn.lock（没有 package-lock.json），用 yarn 而非 npm
+yarn dev             # http://localhost
+yarn build:prod      # 产物 dist/
 ```
 
 前端通过 Vite 代理把 `/dev-api` 转发到 `http://localhost:8080`（见 `vite.config.js`）。
@@ -219,6 +229,54 @@ mvn clean test
 
 密码统一 `123456`，账号见上文「角色与数据权限」表格。
 
+## 容器化部署（docker compose）
+
+> **诚实说明：交付本机未安装 Docker，下面这些命令尚未在本地实跑过。**
+> 因此改用两层**不依赖 Docker** 的检查替代（证据见 `.workbuddy/logs/` 与
+> `docs/大作业/AI留痕/T4-2026-09-17.md`）：
+> ① **94 条配置静态断言**（`.workbuddy/tools/t4_verify.py`）—— YAML 可解析、SQL 顺序与磁盘文件互校、
+> nginx 前缀剥离、Dockerfile 非 root/健康检查、口令无明文、`.dockerignore` 该排的排了；
+> ② **23 条环境变量绑定实证**（`.workbuddy/tools/t4_env_binding_check.py`）—— 用 Spring 真实的
+> 属性源机制证明环境变量确实盖得住配置文件里写死的值（并跑两组不同取值做对照，排除"碰巧相等"）。
+> **这不等于容器真的起来了**，答辩时按实情说明。
+
+```bash
+cp .env.example .env      # 按需改口令；.env 已被 .gitignore 忽略，不会入库
+docker compose up -d
+docker compose ps         # mysql/redis 应为 healthy，backend/frontend 为 running
+docker compose logs lab-backend | tail -50
+# 浏览器打开 http://localhost ，用 labadmin / admin123 登录
+```
+
+| 服务 | 镜像 / 构建源 | 端口 | 关键设计 |
+| --- | --- | --- | --- |
+| `mysql` | `mysql:8.0`（锁定版本，不用 latest） | 3306 | 首次启动按 `deploy/mysql-init.sh` 的**显式顺序**导入 7 个 SQL；时区用数字偏移 `+08:00` |
+| `redis` | `redis:7-alpine` | 6379 | 若依强制依赖；命名卷持久化，重启不掉登录态 |
+| `lab-backend` | `./RuoYi-Vue-fast` | 8080 | 非 root（uid 1000）、`TZ=Asia/Shanghai`、`/dev/tcp` 端口健康检查、exec 形式 ENTRYPOINT |
+| `lab-frontend` | `./RuoYi-Vue3` | 80 | nginx 托管 `dist/`，`/prod-api/` 反代到后端并剥离前缀 |
+
+**三处「不改配置文件」的环境差异覆盖**，全部由 compose 注入（这正是《CI/CD 部署方案》里
+「三环境配置差异」那张表的技术依据）：
+
+| 配置项 | 配置文件里写死的值 | 容器里生效的值 | 覆盖方式 |
+| --- | --- | --- | --- |
+| `ruoyi.profile` | `D:/ruoyi/uploadPath` | `/home/ruoyi/uploadPath` | `RUOYI_PROFILE` |
+| `spring.redis.host` / `spring.redis.port` | `localhost` / `6379`（**无 `${}` 占位符**） | `redis` / `6379` | `SPRING_REDIS_HOST` / `SPRING_REDIS_PORT` |
+| 数据源 url / 账号 / 口令 | 本机默认值 | `jdbc:mysql://mysql:3306/...` | `RUOYI_DB_URL` / `RUOYI_DB_USERNAME` / `RUOYI_DB_PASSWORD` |
+
+生产或类生产再叠一层覆盖文件（需要 Compose v2.24+，用到了 `!override` 标签）：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+差异是：端口只绑回环、容器内关闭接口文档、关键口令改为**必填**（不配就拒绝启动）、
+内存与日志都加上限、`restart: always`。
+
+> **最容易踩的坑：SQL 初始化顺序。** 不要把 `sql/*.sql` 直接挂进 `/docker-entrypoint-initdb.d/` ——
+> 官方镜像按**文件名字母序**执行，`laboratory_*` 会全部排在 `ry_20260417.sql` 之前，
+> 结果是每个脚本都报「表不存在」。必须像本仓库这样，只挂一个显式排序的 `mysql-init.sh`。
+
 ## CI/CD
 
 流水线定义在 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，由 GitHub Actions 执行。
@@ -229,9 +287,9 @@ mvn clean test
 | `backend` | 后端构建与测试 | `mvn -B clean test`（JDK 8 temurin） | surefire 测试报告 |
 | `frontend` | 前端生产构建 | `yarn install --frozen-lockfile` + `yarn build:prod`（Node 22） | `dist/` |
 | `package` | 打包可运行 jar | `mvn -B package -DskipTests`（依赖前两个 job 全绿） | `target/ruoyi.jar` |
-| `docker` | 镜像构建 | `docker build`（**当前注释保留**，待容器化交付完成后启用） | 镜像 |
+| `docker` | 镜像构建 | `docker/build-push-action`（buildx，**只 build 不 push**）+ `docker compose config` 语法门禁 | 后端/前端两个镜像 |
 
-> 三个 job 的产物都以 artifact 形式上载，可在 Actions 运行页面直接下载。
+> 四个 job 的产物都以 artifact 形式上载，可在 Actions 运行页面直接下载。
 > 凭据一律走 GitHub Secrets，`ci.yml` 内不出现任何明文密码。
 
 ### 本地等价流水线
@@ -285,6 +343,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local-pipeline.ps1
 - [ ] 资产二维码内容是相对路径 `/laboratory/repair?assetId=x`（见 `LabAssetServiceImpl.buildAssetQrcode`），
       手机相机直接扫描无法打开，只能由站内登录后跳转。若要贴纸扫码直达，需要配一个站点基址。
 - [ ] `application.yml` 中 `token.secret` 的默认值为弱密钥，生产环境必须用环境变量覆盖。
+      **容器化侧已给出解法**：`docker-compose.yml` 用 `RUOYI_TOKEN_SECRET: ${TOKEN_SECRET:-...}` 注入，
+      `docker-compose.prod.yml` 进一步把它设为**必填项**（不配 `.env` 就拒绝启动）。裸机部署仍须自行覆盖。
+- [ ] nginx 的 `client_max_body_size` 已在容器站点配置里放开到 `20m`（nginx 默认 1m 会把故障照片拦成 413）；
+      **若把后端直接暴露给外网而不经本仓库的 nginx**，需要在对应的反向代理上补同一项。
 - [ ] `statusOrText`、`displayAssetName` 等小工具仍留在各自 ServiceImpl 中，可视需要继续下沉。
 - [x] ~~未初始化 Git 仓库（当前无 `.git`）~~ —— **2026-09-17 已解除**：仓库已 `git init -b main` 并挂上远程
       `origin`（`https://github.com/same-day123/Manager-system.git`），首次提交 `57c81b9` 已推送；
