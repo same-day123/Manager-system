@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.project.laboratory.constant.LabAssetEvent;
 import com.ruoyi.project.laboratory.constant.LabConstants;
+import com.ruoyi.project.laboratory.constant.LabRecordFactory;
 import com.ruoyi.project.laboratory.domain.LabAsset;
 import com.ruoyi.project.laboratory.domain.LabAssetRecord;
 import com.ruoyi.project.laboratory.domain.LabRoom;
@@ -20,7 +22,6 @@ import com.ruoyi.project.laboratory.mapper.LabAssetRecordMapper;
 import com.ruoyi.project.laboratory.mapper.LabRoomMapper;
 import com.ruoyi.project.laboratory.service.ILabAssetService;
 import com.ruoyi.project.laboratory.service.ILabRoomService;
-import com.ruoyi.project.laboratory.util.LabSecurityUtils;
 import com.ruoyi.project.laboratory.util.LabStatusUtils;
 import com.ruoyi.project.laboratory.util.QrCodeUtils;
 
@@ -81,8 +82,8 @@ public class LabAssetServiceImpl implements ILabAssetService
         int rows = labAssetMapper.insertLabAsset(labAsset);
         if (rows > 0)
         {
-            insertAssetRecord(labAsset.getAssetId(), "入库", null, labAsset.getAssetCode(),
-                    LabSecurityUtils.operatorName(labAsset.getCreateBy()), "资产入库：" + labAsset.getAssetName());
+            insertAssetRecord(labAsset.getAssetId(), LabAssetEvent.INBOUND, null, labAsset.getAssetCode(),
+                    labAsset.getCreateBy(), labAsset.getAssetName());
         }
         return rows;
     }
@@ -187,7 +188,7 @@ public class LabAssetServiceImpl implements ILabAssetService
         int rows = labAssetMapper.deleteLabAssetByAssetId(assetId);
         if (rows > 0)
         {
-            insertAssetRecord(assetId, "报废", labAsset.getAssetCode(), null, LabSecurityUtils.operatorName(null), "资产删除或报废");
+            insertAssetRecord(assetId, LabAssetEvent.SCRAP, labAsset.getAssetCode(), null, null);
         }
         return rows;
     }
@@ -205,7 +206,7 @@ public class LabAssetServiceImpl implements ILabAssetService
         {
             for (Long assetId : assetIds)
             {
-                insertAssetRecord(assetId, "报废", null, null, LabSecurityUtils.operatorName(null), "资产批量删除或报废");
+                insertAssetRecord(assetId, LabAssetEvent.SCRAP_BATCH, null, null, null);
             }
         }
         return rows;
@@ -274,21 +275,23 @@ public class LabAssetServiceImpl implements ILabAssetService
 
     private void recordAssetUpdate(LabAsset oldAsset, LabAsset newAsset)
     {
-        String operator = LabSecurityUtils.operatorName(newAsset.getUpdateBy());
         if (newAsset.getRoomId() != null && !Objects.equals(oldAsset.getRoomId(), newAsset.getRoomId()))
         {
             LabRoom newRoom = labRoomService.selectLabRoomByRoomId(newAsset.getRoomId());
-            insertAssetRecord(oldAsset.getAssetId(), "调拨", oldAsset.getRoomName(),
-                    newRoom == null ? String.valueOf(newAsset.getRoomId()) : newRoom.getRoomName(), operator, "资产所属实验室调整");
+            insertAssetRecord(oldAsset.getAssetId(), LabAssetEvent.TRANSFER, oldAsset.getRoomName(),
+                    newRoom == null ? String.valueOf(newAsset.getRoomId()) : newRoom.getRoomName(),
+                    newAsset.getUpdateBy());
         }
         if (StringUtils.isNotEmpty(newAsset.getStatus()) && !Objects.equals(oldAsset.getStatus(), newAsset.getStatus()))
         {
-            insertAssetRecord(oldAsset.getAssetId(), LabStatusUtils.assetRecordType(newAsset.getStatus()),
-                    LabStatusUtils.assetStatusLabel(oldAsset.getStatus()), LabStatusUtils.assetStatusLabel(newAsset.getStatus()), operator, "资产状态变更");
+            insertAssetRecord(oldAsset.getAssetId(), LabAssetEvent.ofAssetStatus(newAsset.getStatus()),
+                    LabStatusUtils.assetStatusLabel(oldAsset.getStatus()),
+                    LabStatusUtils.assetStatusLabel(newAsset.getStatus()), newAsset.getUpdateBy());
         }
         if (hasBaseInfoChanged(oldAsset, newAsset))
         {
-            insertAssetRecord(oldAsset.getAssetId(), "资料修改", null, null, operator, "资产基础资料更新");
+            insertAssetRecord(oldAsset.getAssetId(), LabAssetEvent.INFO_UPDATE, null, null,
+                    newAsset.getUpdateBy());
         }
     }
 
@@ -307,18 +310,16 @@ public class LabAssetServiceImpl implements ILabAssetService
         return newValue != null && !Objects.equals(oldValue, newValue);
     }
 
-    private void insertAssetRecord(Long assetId, String recordType, String fromValue, String toValue,
-            String operatorName, String content)
+    /**
+     * 写一条资产履历。记录本身（动作名、文案、操作人兜底）由
+     * {@link LabRecordFactory} 组装，这里只保留「组装 → 落库」的一步转发，
+     * 避免调用点上出现两套并行的构造逻辑。
+     */
+    private void insertAssetRecord(Long assetId, LabAssetEvent event, String fromValue, String toValue,
+            String operator, String... contentArgs)
     {
-        LabAssetRecord record = new LabAssetRecord();
-        record.setAssetId(assetId);
-        record.setRecordType(recordType);
-        record.setFromValue(fromValue);
-        record.setToValue(toValue);
-        record.setOperatorName(operatorName);
-        record.setRecordContent(content);
-        record.setCreateBy(operatorName);
-        labAssetRecordMapper.insertLabAssetRecord(record);
+        labAssetRecordMapper.insertLabAssetRecord(
+                LabRecordFactory.assetRecord(assetId, event, fromValue, toValue, operator, contentArgs));
     }
 
     private String formatDate(Date date)

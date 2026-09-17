@@ -13,7 +13,7 @@
 - 远程 `github.com/same-day123/Manager-system`（本地 main + origin 已挂）。**PAT 已吊销：任何角色只 commit、禁止 push**。
 
 ## 代码约定
-1. 自定义码只在 `com.ruoyi.project.laboratory`（controller／domain／mapper + `resources/mybatis/laboratory/*.xml`／service+impl／constant/LabConstants／util）。若依配置走通配符，**新增子包无需改配置**。
+1. 自定义码只在 `com.ruoyi.project.laboratory`（controller／domain／mapper + `resources/mybatis/laboratory/*.xml`／service+impl／constant（`LabConstants` + `LabAssetEvent`/`LabRepairEvent`/`LabRecordFactory`）／util）。若依配置走通配符，**新增子包无需改配置**。
 2. **角色口径只能改三处且必须同步**：后端 `LabRoleUtils`、前端 `utils/labPermission.js`、`sql/laboratory_permission_fix.sql` 末尾清单（**D-10 = 漏了第三处**）。`canHandleRepair`=admin/teacher/lab_manager/repair_engineer；`canViewAll`=上述 4 个 + asset_keeper/lab_viewer。
 3. 接口前缀 `/laboratory/{room|asset|repair|dashboard}`；权限标识 `laboratory:{模块}:{操作}`。
 4. 报修状态机（`LabRepairServiceImpl.validateStatusChange`）：`0 待审核→1 待维修→2 维修中→3 已完成`，`0→4 已拒绝`；非法流转抛 `ServiceException`；传 `null` 或同状态**放行**。
@@ -22,11 +22,16 @@
 7. SQL 在 `RuoYi-Vue-fast/sql/`，按头部 `[N/7]` 顺序执行：`[1/7] laboratory_schema`→`[2/7] ry_20260417`→`[3/7] laboratory_menu_role`→`[4/7] laboratory_demo_seed`→`[5/7] laboratory_user_seed`→`[6/7] laboratory_upgrade`→`[7/7] laboratory_permission_fix`；**全部可重复执行**。不参与顺序的按需脚本：`laboratory_index_fix.sql`（幂等迁移，删与逻辑删除冲突的唯一索引）、`laboratory_cleanup.sql`（界面精简，非清数据）。
 8. 建表硬规矩：① 字段类型/长度**以线上库为准**；② 业务编号（`asset_code`／`repair_code`／`room_no`）**只建普通索引、不建唯一索引**——系统一律逻辑删除、行不消失，唯一索引会与「编号可重用」（校验带 `del_flag='0'`）冲突 → 「删了资产就建不回同编号、接口 500」；唯一性由 `checkAssetCodeUnique`／`checkRoomNoUnique` 承担。字符集显式 `utf8mb4`／`utf8mb4_general_ci`。
 9. 安全（写非功能需求可引）：密码 `BCryptPasswordEncoder` 存哈希；`token.header=Authorization`；`token.expireTime=30` 分钟；`token.secret` 默认弱值须用 `RUOYI_TOKEN_SECRET` 覆盖（**D-08**）。
+10. **履历写入单点（T5 简单工厂，别再绕过它）**：资产／报修履历的构造一律走 `LabRecordFactory.assetRecord(...)`／`repairRecord(...)`，调用方**只声明事件**。动作名与文案模板只在 `LabAssetEvent`(8)／`LabRepairEvent`(5) 里；**新增履历事件只加枚举常量**，两个 Service 零改动。文案含**中文全角引号 `“”`(U+201C/U+201D) 与全角分号 `；`(U+FF1B)**，改文案务必整段复制、别手打。「资产状态码→动作名」唯一来源 = `LabAssetEvent.ofAssetStatus`（`LabStatusUtils.assetRecordType` 已退化为它的封装）。
+11. **卡的示例代码 ≠ 事实**：任务卡是 AI 写的，示例可能与真实代码不符（**T5 卡的 `TRANSFER` 模板就带错了占位符**）。动手前必须 `git show HEAD:` 或读盘核对真实现状，**"行为逐字不变"这类红线优先于卡的示例**。**纯重构的验收要两层证据**：静态（字面量级逐字节比对，别用子串——`"非法的报修状态流转"` 会假阳性）+ 动态（脱离 Spring 的探针／运行期 SQL 参数）。
 
 ## 状态锚点（权威看 `AGENTS.md` 第 6／7 节）
-- 关键路径 `T0→T1→T2→T3→D1→D2→D3`：**T0／T1／T2 已通，瓶颈 = T3（CI 流水线）**。测试基线 **49 全绿**（单测 **33** + 集成 **16**）；加固轮后 T1 卡口径由 30→33、T2 由 7→16。
-- 待办：**T3** CI+金丝雀／**T4** Dockerfile／**T5** 设计模式（简单工厂）；**D1** 五份 PDF（70 分）归文档负责。
-- **D-21** 真实库缺 `laboratory:dashboard:view` 菜单（除超管外首页看板不可见）→ 修复脚本 `[7/7] laboratory_permission_fix.sql` **已就绪且幂等，但 `AGENTS.md` §7.3 仍记 `❌ 未修`**（行内未回写执行结果）——**以台账为准**；截图因此用 `admin` 取景。含本条的教训：**"脚本存在"≠"已在真实库执行"，回写状态只看台账行内文字**。
+- 关键路径 `T0→T1→T2→T3→D1→D2→D3`：**T0／T1／T2／T3 已通**（T3 = `.github/workflows/ci.yml` + `deploy/local-pipeline.ps1`，`PASS 4 / SKIPPED 2 / FAIL 0`；**D-16 已销项**，此前"别找 local-pipeline.ps1"的记忆已过时）。**T5 已完成**（简单工厂 `LabRecordFactory` + 两个事件枚举 + `docs/大作业/设计模式-类图.md`；**D-05 销项**；纯重构，`Tests run: 49` 用例数不变）。测试基线 **49 全绿**（单测 **33** + 集成 **16**）。
+- 待办：**代码负责只剩 T4**（Dockerfile；`ci.yml` 里已备注释着的 docker job，取消注释即启用，同时销 D-04）；**D1** 剩余两份文档（第 3 测试、第 4 CI/CD）。**D-24 / D-25**（看板"5 台维修中 / 0 待处理"自相矛盾 + 两张趋势图空）归属代码负责／T0，**待阿辉在 A/B 方案间拍板**，未擅动。
+- **文档侧（交付物 1~5，70 分）**：**第 1／2／5 份已完成并出 PDF** —— 01 需求 **8** 页、02 架构 **13** 页、05 AI 报告 **6** 页，**全部命中任务书区间**。剩余 **第 3 份《测试计划与用例文档》**（素材已交件：`AI留痕/测试素材交付.md`）与 **第 4 份《CI/CD 部署方案》**（T3/T4 素材已到位）。
+- **PDF 流水线已打通（零依赖，可复用）**：`Markdown →(自写 GFM 渲染器)→ 打印 HTML →(Chrome 152 无头 + CDP `Page.printToPDF`)→ PDF`。工具 `.workbuddy/tools/md2pdf/` 5 个脚本：`md2pdf.mjs`（渲染，**整批只起一次浏览器**）、`pdfinfo.mjs`（不装依赖读页数/`FontFile2` 嵌入/`ToUnicode` 可复制）、`build.mjs`（批量 + **页数区间 PASS/FAIL**，报告 `.workbuddy/logs/md2pdf-build.txt`）、`build.ps1`（纯 ASCII 包装器）、`pagemap.mjs`（**量每章落第几页**，报告 `md2pdf-pagemap.txt`）。命令：`node .workbuddy/tools/md2pdf/build.mjs`；单份 `MD2PDF_ONLY=05 node ...build.mjs`。**新增文档放进 `docs/大作业/文档/` 即自动纳入构建**（区间表 `RANGE` 在 `build.mjs`，`05` 已配 `[4,6]`）。
+- **压页数两条硬经验**：① 打印 CSS 对表格加了 `page-break-inside: avoid` → **放不下的表格整张跳页**，留白累计可达 1 页，故 `ceil(scrollHeight/页高)` **会低估 1 页，判据要留余量**；先跑 `pagemap.mjs` 定位再定点删，**别盲删**。② **收紧 CSS 是双向的**：为压 02（19→13 页）收紧后，01 从 10 页掉到 8 页贴住下限——**上限下限一起盯**。
+- **D-21** 真实库缺 `laboratory:dashboard:view` 菜单（除超管外首页看板不可见）→ 修复脚本 `[7/7] laboratory_permission_fix.sql` **已就绪且幂等，但 `AGENTS.md` §7.3 仍记 `❌ 未修`**（行内未回写执行结果）——**以台账为准**；截图因此用 `admin` 取景。含本条的教训：**"脚本存在"≠"已在真实库执行"，回写状态只看台账行内文字**。（`巡检-UI演示路径-2026-09-17.md` 实测该菜单已存在、`labadmin` 能看到看板，但§7.3 未回写，**两处不一致时以台账为准**。）
 - **测试侧两条已收口（别再当遗留）**：**D-07** 原 5 个反射版状态机用例**有意保留**（契约层），另新增 `LabRepairStatusMachinePublicEntryTest` 走 `updateLabRepair` 公开入口（入口层）；**D-19** 看板**已覆盖**（8 条 mapper 查询、7 个用例）——靠测试侧 `create alias ... for "类.方法"` 注册同名 `date_format`/`date_sub`，**生产 mapper XML 一字未改**。答辩口径：看板已测。
 - 容忍偏移（答辩主动说明）：**D-01** 二维码相对路径手机扫不开；**D-06** 前后端状态机两张手写表；**D-08** 弱密钥。**D-19 已移出容忍清单**。
 - **测试的两条如实说明（素材包 `AI留痕/测试素材交付.md` 已写，文档与答辩沿用）**：① **行/分支覆盖率百分比出不来**（离线仓库缺 `jacoco-maven-plugin`/`org.jacoco.core`），只写「用例↔BR 矩阵 + 断言 177 / 交互校验 27」，**不要编百分比**；② 构建日志里 `IllegalStateException: Cannot use PPID ... NOOP events` 是 Surefire 调 WMIC 被安全策略拦截后自行降级，**不影响测试**。

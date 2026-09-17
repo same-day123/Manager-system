@@ -62,20 +62,45 @@ Manager_system/
 
 ```
 com.ruoyi.project.laboratory
-├── constant/LabConstants          状态码常量（资产状态、报修状态、逻辑删除标记）
+├── constant/
+│   ├── LabConstants               状态码常量（资产状态、报修状态、逻辑删除标记）
+│   ├── LabAssetEvent              资产履历事件枚举（动作名 + 文案模板 + 状态码反查）
+│   ├── LabRepairEvent             报修履历事件枚举（动作名 + 文案模板）
+│   └── LabRecordFactory           ★ 履历记录工厂（简单工厂，见「设计模式」一节）
 ├── controller/                    LabRoom / LabAsset / LabRepair / LabDashboard Controller
 ├── domain/                        LabRoom、LabAsset、LabRepair、LabRepairRecord、LabAssetRecord
 ├── mapper/                        LabXxxMapper
 ├── service/ + service/impl/       ILabXxxService + LabXxxServiceImpl
 └── util/
     ├── LabRoleUtils               角色判定唯一来源
-    ├── LabStatusUtils             状态中文标签
+    ├── LabStatusUtils             状态中文标签（assetRecordType 委托 LabAssetEvent）
     ├── LabSecurityUtils           操作人取值
     └── QrCodeUtils                资产二维码 SVG 生成
 ```
 
 若依的 MyBatis 配置使用通配符（`typeAliasesPackage: com.ruoyi.project.**.domain`、
 `mapperLocations: classpath*:mybatis/**/*Mapper.xml`），因此新增子包**无需修改任何配置**。
+
+## 设计模式：履历记录简单工厂
+
+资产履历（`lab_asset_record`）与报修履历（`lab_repair_record`）原先由两个 Service 各自
+手工 `new` 对象、手工写动作名、手工拼文案、手工兜底操作人，同样四步在 10 个调用点上重复。
+现用一个**简单工厂（创建型）**把「一次业务事件 → 一条履历记录」的组装规则收口：
+
+```
+Service 声明事件 → LabRecordFactory.assetRecord/repairRecord(...) 组装 → Mapper 落库
+                        ↑ 动作名与文案来自 LabAssetEvent / LabRepairEvent
+```
+
+| 收益 | 说明 |
+| --- | --- |
+| 文案集中 | 模板只存在枚举里，改措辞一处生效 |
+| 满足 OCP | 新增履历事件只加枚举常量，**两个 Service 零改动** |
+| 兜底不漏 | 操作人兜底与 `createBy` 赋值只在工厂里存在一处 |
+| 口径唯一 | 「资产状态码 → 动作名」只有 `LabAssetEvent.ofAssetStatus` 一张表 |
+
+工厂是**无状态纯静态工具类**（无 Spring 注解、不写库、不加缓存），单元测试无需 Spring 上下文。
+完整类图、选型理由与「为什么不选状态模式」见 [`docs/大作业/设计模式-类图.md`](docs/大作业/设计模式-类图.md)。
 
 ## 角色与数据权限
 

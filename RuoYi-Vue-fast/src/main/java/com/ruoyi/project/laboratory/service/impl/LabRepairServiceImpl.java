@@ -12,6 +12,8 @@ import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.project.laboratory.constant.LabConstants;
+import com.ruoyi.project.laboratory.constant.LabRecordFactory;
+import com.ruoyi.project.laboratory.constant.LabRepairEvent;
 import com.ruoyi.project.laboratory.domain.LabAsset;
 import com.ruoyi.project.laboratory.domain.LabRepair;
 import com.ruoyi.project.laboratory.domain.LabRepairRecord;
@@ -81,8 +83,9 @@ public class LabRepairServiceImpl implements ILabRepairService
         if (rows > 0)
         {
             updateAssetStatus(labRepair.getAssetId(), LabConstants.ASSET_STATUS_REPAIRING);
-            insertRepairRecord(labRepair.getRepairId(), "提交报修", null, LabConstants.REPAIR_STATUS_PENDING_REVIEW,
-                    "故障等级：" + statusOrText(labRepair.getFaultLevel()) + "；" + labRepair.getFaultDescription());
+            insertRepairRecord(labRepair.getRepairId(), LabRepairEvent.SUBMIT, null,
+                    LabConstants.REPAIR_STATUS_PENDING_REVIEW, statusOrText(labRepair.getFaultLevel()),
+                    labRepair.getFaultDescription());
         }
         return rows;
     }
@@ -144,14 +147,15 @@ public class LabRepairServiceImpl implements ILabRepairService
         {
             if (StringUtils.isNotEmpty(requestedStatus) && !requestedStatus.equals(oldRepair.getStatus()))
             {
-                insertRepairRecord(labRepair.getRepairId(), "状态流转", oldRepair.getStatus(), requestedStatus,
-                        "报修状态由“" + LabStatusUtils.repairStatusLabel(oldRepair.getStatus()) + "”变更为“"
-                                + LabStatusUtils.repairStatusLabel(requestedStatus) + "”");
+                insertRepairRecord(labRepair.getRepairId(), LabRepairEvent.STATUS_CHANGE, oldRepair.getStatus(),
+                        requestedStatus, LabStatusUtils.repairStatusLabel(oldRepair.getStatus()),
+                        LabStatusUtils.repairStatusLabel(requestedStatus));
             }
             else
             {
-                insertRepairRecord(labRepair.getRepairId(), manager ? "维修信息更新" : "报修信息更新",
-                        oldRepair.getStatus(), oldRepair.getStatus(), "报修单信息已更新");
+                insertRepairRecord(labRepair.getRepairId(),
+                        manager ? LabRepairEvent.REPAIR_UPDATE : LabRepairEvent.INFO_UPDATE,
+                        oldRepair.getStatus(), oldRepair.getStatus());
             }
         }
         if (rows > 0 && (LabConstants.REPAIR_STATUS_FINISHED.equals(labRepair.getStatus())
@@ -200,8 +204,9 @@ public class LabRepairServiceImpl implements ILabRepairService
         int rows = labRepairMapper.updateLabRepair(update);
         if (rows > 0)
         {
-            insertRepairRecord(labRepair.getRepairId(), "维修评价", oldRepair.getStatus(), oldRepair.getStatus(),
-                    "评分：" + labRepair.getRating() + "；" + statusOrText(labRepair.getEvaluationContent()));
+            insertRepairRecord(labRepair.getRepairId(), LabRepairEvent.EVALUATE, oldRepair.getStatus(),
+                    oldRepair.getStatus(), String.valueOf(labRepair.getRating()),
+                    statusOrText(labRepair.getEvaluationContent()));
         }
         return rows;
     }
@@ -367,17 +372,18 @@ public class LabRepairServiceImpl implements ILabRepairService
         return LabRoleUtils.canHandleRepair();
     }
 
-    private void insertRepairRecord(Long repairId, String actionName, String fromStatus, String toStatus, String content)
+    /**
+     * 写一条报修履历。记录本身（动作名、文案、操作人兜底）由
+     * {@link LabRecordFactory} 组装，这里只保留「组装 → 落库」的一步转发。
+     *
+     * <p>操作人沿用改造前的口径：不传具体账号，由工厂回落到当前登录用户 /
+     * {@code "system"}。
+     */
+    private void insertRepairRecord(Long repairId, LabRepairEvent event, String fromStatus, String toStatus,
+            String... contentArgs)
     {
-        LabRepairRecord record = new LabRepairRecord();
-        record.setRepairId(repairId);
-        record.setActionName(actionName);
-        record.setFromStatus(fromStatus);
-        record.setToStatus(toStatus);
-        record.setOperatorName(LabSecurityUtils.operatorName(null));
-        record.setRecordContent(content);
-        record.setCreateBy(record.getOperatorName());
-        labRepairRecordMapper.insertLabRepairRecord(record);
+        labRepairRecordMapper.insertLabRepairRecord(
+                LabRecordFactory.repairRecord(repairId, event, fromStatus, toStatus, null, contentArgs));
     }
 
     private String statusOrText(String text)

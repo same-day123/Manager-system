@@ -1,5 +1,6 @@
 package com.ruoyi.project.laboratory.util;
 
+import com.ruoyi.project.laboratory.constant.LabAssetEvent;
 import com.ruoyi.project.laboratory.constant.LabConstants;
 
 /**
@@ -69,14 +70,16 @@ public final class LabStatusUtils
     }
 
     /**
-     * 资产状态变更时写入履历表的记录类型。
+     * 资产状态变更时写入履历表的记录类型（字典口径的中文动作名）。
+     *
+     * <p>判定规则自 T5 起只存在于 {@link LabAssetEvent#ofAssetStatus(String)}，本方法退化为
+     * 它的薄封装 —— 字典口径与履历写入共用同一张表，不会再出现"改了一处漏了另一处"。
+     * 对外的取值与改造前完全一致：停用 → "停用"，正常 → "启用"，其余 → "维修"。
+     *
+     * @see LabAssetEvent#ofAssetStatus(String)
      */
     public static String assetRecordType(String status)
     {
-        if (LabConstants.ASSET_STATUS_DISABLED.equals(status))
-        {
-            return "停用";
-        }
-        return LabConstants.ASSET_STATUS_NORMAL.equals(status) ? "启用" : "维修";
+        return LabAssetEvent.ofAssetStatus(status).actionName();
     }
 }
