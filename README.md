@@ -192,4 +192,6 @@ mvn test
       手机相机直接扫描无法打开，只能由站内登录后跳转。若要贴纸扫码直达，需要配一个站点基址。
 - [ ] `application.yml` 中 `token.secret` 的默认值为弱密钥，生产环境必须用环境变量覆盖。
 - [ ] `statusOrText`、`displayAssetName` 等小工具仍留在各自 ServiceImpl 中，可视需要继续下沉。
-- [ ] 未初始化 Git 仓库（当前无 `.git`）。
+- [x] ~~未初始化 Git 仓库（当前无 `.git`）~~ —— **2026-09-17 已解除**：仓库已 `git init -b main` 并挂上远程
+      `origin`（`https://github.com/same-day123/Manager-system.git`），首次提交 `57c81b9` 已推送；
+      其后 `ed971fd`（T0 补齐建表脚本与种子数据）待用新凭据推送。
