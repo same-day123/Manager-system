@@ -1,0 +1,181 @@
+# ---------------------------------------------------------------------------
+# 高校实验室资产与报修管理平台 —— CI 流水线
+#
+#   交付物：《CI/CD 部署方案》的「流水线设计」章节（10 分）
+#   本地等价脚本：deploy/local-pipeline.ps1（6 个阶段与下面 3 个 job 一一对应）
+#
+#   job 结构：
+#     backend   后端构建与测试（mvn clean test）        → 产物：surefire 测试报告
+#     frontend  前端生产构建（vite build）              → 产物：dist/
+#     package   打包可运行 jar（needs: backend,frontend）→ 产物：ruoyi.jar
+#     docker    镜像构建（**暂时注释**，等 T4「容器化交付」完成后启用）
+#
+#   部署策略：**金丝雀发布**（理由见《CI/CD 部署方案》—— 滚动发布缺 K8s 编排能力、
+#   蓝绿在单机上资源翻倍且若依用 Redis 存会话会导致切换时全员掉线）。
+#   本文件只负责「构建 + 测试 + 出包」，发布动作由 Nginx upstream 权重控制，
+#   不属于 GitHub Actions 的职责范围。
+# ---------------------------------------------------------------------------
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]          # 推 main 即跑（金丝雀发布前的质量门）
+  pull_request:                 # PR 必须先过流水线
+  workflow_dispatch:            # 允许手动触发：答辩演示时可直接跑一次截图，无需为了触发而提交代码
+
+# 同一分支上的新推送取消上一次未跑完的任务，避免 runner 排队
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# 最小权限原则：CI 只读仓库内容
+permissions:
+  contents: read
+
+jobs:
+  # =========================================================================
+  # job 1：后端构建与测试
+  # =========================================================================
+  backend:
+    name: 后端构建与测试
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # 后端是 Maven 项目根，所有 run 步骤默认在此目录执行
+        working-directory: RuoYi-Vue-fast
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8 (temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'      # 与 pom.xml 的 java.version=1.8 及生产运行镜像保持一致
+          cache: maven           # 单模块项目，cache: maven 直接可用，无需 cache-dependency-path
+
+      - name: 版本信息
+        run: |
+          java -version
+          mvn -v
+
+      # 【硬性】测试阶段绝不加 -DskipTests —— 跳过测试的流水线等于没写
+      - name: 后端构建与测试
+        run: mvn -B clean test
+
+      # if: always() —— 测试失败时报告更要留下，否则无法定位
+      - name: 上传 surefire 测试报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          # 注意：defaults.run.working-directory 只作用于 run 步骤，
+          # upload-artifact 的 path 是相对「仓库根目录」的，所以这里要带上前缀。
+          path: RuoYi-Vue-fast/target/surefire-reports/
+          if-no-files-found: warn
+
+  # =========================================================================
+  # job 2：前端生产构建
+  # =========================================================================
+  frontend:
+    name: 前端构建
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: RuoYi-Vue3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+          cache-dependency-path: RuoYi-Vue3/yarn.lock
+
+      # 仓库里只有 yarn.lock、没有 package-lock.json（若依源码的历史状态），
+      # 所以这里必须走 yarn —— `npm ci` 会因缺少 lock 文件直接失败。
+      # 若 --frozen-lockfile 因 lockfile 与 package.json 不同步而失败，
+      # 改用 npm install，并在同一次提交里补上生成的 package-lock.json。
+      - name: 启用 corepack
+        run: corepack enable
+
+      - name: 安装前端依赖
+        run: yarn install --frozen-lockfile
+
+      - name: 前端生产构建
+        run: yarn build:prod
+
+      - name: 上传前端构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: RuoYi-Vue3/dist/
+          if-no-files-found: error
+
+  # =========================================================================
+  # job 3：打包可运行 jar（依赖前两个 job 全绿）
+  # =========================================================================
+  package:
+    name: 打包产物
+    runs-on: ubuntu-latest
+    needs: [ backend, frontend ]
+    defaults:
+      run:
+        working-directory: RuoYi-Vue-fast
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8 (temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      # 测试已经在 backend job 里跑过并通过，这里只负责产出可运行 jar，不重复跑测试
+      # （与「流水线不得跳过测试」不冲突：测试这一步在上面，且是 package 的前置。）
+      - name: 打包
+        run: mvn -B package -DskipTests
+
+      - name: 上传后端产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: RuoYi-Vue-fast/target/ruoyi.jar
+          if-no-files-found: error
+
+  # =========================================================================
+  # job 4：镜像构建 —— **暂时注释**，等 T4「容器化交付」产出 Dockerfile 后取消注释
+  #
+  #   依赖：RuoYi-Vue-fast/Dockerfile（两段式：构建阶段 maven:3.8-jdk-8 → 运行阶段 temurin 8-jre）
+  #   凭据【硬性】一律走 GitHub Secrets，禁止在 yml 里硬编码任何密码
+  # =========================================================================
+  # docker:
+  #   name: 镜像构建
+  #   runs-on: ubuntu-latest
+  #   needs: [ package ]
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: 登录镜像仓库
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ${{ secrets.REGISTRY_URL }}
+  #         username: ${{ secrets.REGISTRY_USERNAME }}
+  #         password: ${{ secrets.REGISTRY_PASSWORD }}
+  #
+  #     - name: 构建并推送后端镜像
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./RuoYi-Vue-fast
+  #         file: ./RuoYi-Vue-fast/Dockerfile
+  #         push: true
+  #         tags: ${{ secrets.REGISTRY_URL }}/lab-asset-backend:${{ github.sha }}

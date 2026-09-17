@@ -1,0 +1,61 @@
+﻿# T3 本地等价流水线 —— 运行结果（答辩「流水线运行截图」的采集对象）
+#
+# 采集命令（在仓库根 D:\code\Manager_system 执行）：
+#   powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local-pipeline.ps1
+#
+# 对应配置：.github/workflows/ci.yml（job: backend / frontend / package）
+# 本次运行：2026-09-17 22:57:52 起，总耗时 216.2s，EXIT=0
+# 结论：PASS 4 / SKIPPED 2 / FAIL 0 —— 阶段 1~4 全 PASS，阶段 5/6 按本机环境 SKIPPED
+#       （本机未安装 Docker，无法由流水线拉起容器；**SKIPPED 不是 PASS**）
+#
+# 采集方式：把该脚本在本机终端跑一遍，等汇总表打印完成后对终端截屏即可。
+# ---------------------------------------------------------------- 以下为逐字输出
+
+==============================================================
+  高校实验室资产与报修管理平台 · 本地等价流水线
+  对应配置  .github/workflows/ci.yml   （job: backend / frontend / package）
+  开始时间  2026-09-17 22:57:52
+==============================================================
+
+[1/6] 版本信息                 ... PASS (3.5 s)
+      提交: 1668e4a  (branch: main)
+      工作目录: D:\code\Manager_system
+[2/6] 后端构建与测试           ... PASS (111.6 s)
+      命令: mvnx.ps1 -o -B clean test   <- job: backend
+      >> [INFO] Tests run: 49, Failures: 0, Errors: 0, Skipped: 0
+      >> [INFO] BUILD SUCCESS
+[3/6] 前端构建                 ... PASS (49.5 s)
+      命令: vite build --mode production   <- job: frontend
+      >> ✓ 2545 modules transformed.
+      >> ✓ built in 42.71s
+      >> dist/ 产物文件数: 312
+[4/6] 打包产物                 ... PASS (49 s)
+      命令: mvnx.ps1 -o -B package -DskipTests   <- job: package
+      >> [INFO] BUILD SUCCESS
+      >> 产物: RuoYi-Vue-fast/target/ruoyi.jar  (85.1 MB)
+      >> 已备份到仓库外: D:\code\_Manager_system_build_cache\ruoyi.jar（防并行会话清空 target/）
+[5/6] 镜像构建                 ... SKIPPED (0.1 s)
+      跳过原因: 本机未安装 Docker —— 镜像构建在 GitHub Actions 上执行
+[6/6] 冒烟测试                 ... SKIPPED (2.5 s)
+      跳过原因: 探测到 http://localhost:8080 返回 HTTP 502，但该服务不是本流水线启动的
+      本机未装 Docker（阶段 5 SKIPPED）→ 不对非本流水线启动的服务判失败
+      若要真实冒烟：先手工起后端（MySQL + Redis），再重跑本脚本
+
+==============================================================
+  流水线汇总
+==============================================================
+  阶段                           结果       耗时(秒)
+  ------------------------------ --------- ---------
+  [1/6] 版本信息                 PASS            3.5
+  [2/6] 后端构建与测试           PASS          111.6
+  [3/6] 前端构建                 PASS           49.5
+  [4/6] 打包产物                 PASS             49
+  [5/6] 镜像构建                 SKIPPED         0.1
+  [6/6] 冒烟测试                 SKIPPED         2.5
+==============================================================
+  PASS 4 / SKIPPED 2 / FAIL 0      总耗时 216.2 s
+  完整输出: D:\code\Manager_system\.workbuddy\logs\local-pipeline-20260917-225752.log
+==============================================================
+
+流水线通过（本输出即答辩「流水线运行结果」截图的采集对象）
+

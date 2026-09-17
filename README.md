@@ -1,5 +1,7 @@
 # 高校实验室资产与报修系统
 
+[![CI](https://github.com/same-day123/Manager-system/actions/workflows/ci.yml/badge.svg)](https://github.com/same-day123/Manager-system/actions/workflows/ci.yml)
+
 基于 **若依 RuoYi-Vue 3.9.2**（前后端分离版）二次开发的实验室资产与报修管理平台。
 在保留若依原生系统管理、监控、代码生成能力的基础上，新增了「实验室管理」业务模块。
 
@@ -32,6 +34,8 @@
 
 ```
 Manager_system/
+├── .github/workflows/ci.yml              GitHub Actions 流水线定义
+├── deploy/local-pipeline.ps1             本地等价流水线（6 阶段，与 ci.yml 一一对应）
 ├── RuoYi-Vue-fast/                      后端
 │   ├── sql/                             数据库初始化脚本（可重复执行，见下文执行顺序）
 │   └── src/main/
@@ -161,19 +165,84 @@ npm run build:prod   # 产物 dist/
 
 前端通过 Vite 代理把 `/dev-api` 转发到 `http://localhost:8080`（见 `vite.config.js`）。
 
-### 4. 运行单元测试
+### 4. 运行测试
 
 ```bash
 cd RuoYi-Vue-fast
-mvn test
+mvn clean test
 ```
 
-现有测试位于 `src/test/java/com/ruoyi/project/laboratory/service/impl/`，覆盖四条业务硬约束：
-报修状态机的全部合法/非法流转矩阵、维修中资产不可删除、房间下仍有资产时不可删除。
+> 本机若报 `ClassNotFoundException: plexus-classworlds.launcher`，说明 `mvn` 启动脚本损坏，改用包装脚本：
+> `powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy/tools/mvnx.ps1 -o -B clean test`。
+
+测试分两层，**合计 49 个用例，全部通过**（`Tests run: 49, Failures: 0, Errors: 0`，2026-09-17 22:21 实测）：
+
+| 层次 | 数量 | 位置 | 依赖 |
+| --- | :-: | --- | --- |
+| **单元测试** | 33 | `src/test/java/com/ruoyi/project/laboratory/{service/impl,util}/` | 仅 JUnit 5 + Mockito，**不连数据库** |
+| **集成测试** | 16 | `src/test/java/com/ruoyi/project/laboratory/integration/` | **H2 1.4.199 内存库，本地无需安装 MySQL / Redis** |
+
+- **单元测试**覆盖报修状态机全部合法/非法流转矩阵（含 `updateLabRepair` 公开入口版）、提交校验、
+  评价规则、资产与房间校验、以及权限判定口径（`LabRoleUtils`）。
+- **集成测试**跑真实的 `Service → Mapper → 数据库` 链路，验证多表事务落库结果（提交报修时
+  报修单 + 资产状态 + 履历三张表一起写、非法状态流转时整体不变、逻辑删除后行仍在等），
+  并覆盖首页看板的 4 项指标与 4 张图查询。
+  建表脚本由 `src/test/resources/sql/lab-schema-h2.sql` 提供（由 `sql/laboratory_schema.sql` 转 H2 方言）。
+  跑集成测试**不需要任何中间件**，CI 里可直接零依赖执行。
 
 ### 演示账号
 
 密码统一 `123456`，账号见上文「角色与数据权限」表格。
+
+## CI/CD
+
+流水线定义在 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，由 GitHub Actions 执行。
+触发条件：推送到 `main`、发起 Pull Request，以及手动触发（`workflow_dispatch`）。
+
+| job | 阶段 | 命令 | 产物 |
+| :---: | --- | --- | --- |
+| `backend` | 后端构建与测试 | `mvn -B clean test`（JDK 8 temurin） | surefire 测试报告 |
+| `frontend` | 前端生产构建 | `yarn install --frozen-lockfile` + `yarn build:prod`（Node 22） | `dist/` |
+| `package` | 打包可运行 jar | `mvn -B package -DskipTests`（依赖前两个 job 全绿） | `target/ruoyi.jar` |
+| `docker` | 镜像构建 | `docker build`（**当前注释保留**，待容器化交付完成后启用） | 镜像 |
+
+> 三个 job 的产物都以 artifact 形式上载，可在 Actions 运行页面直接下载。
+> 凭据一律走 GitHub Secrets，`ci.yml` 内不出现任何明文密码。
+
+### 本地等价流水线
+
+真实流水线跑在 GitHub Actions 上，答辩或本地自检时用一个等价脚本按**相同阶段顺序**跑一遍：
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local-pipeline.ps1
+```
+
+脚本共 6 个阶段（版本信息 / 后端构建与测试 / 前端构建 / 打包产物 / 镜像构建 / 冒烟测试），
+与 `ci.yml` 的 job 一一对应；每阶段打印 `[n/6] 阶段名 ... PASS (耗时)`，末尾输出汇总表，
+任一阶段失败即 `exit 1`。
+
+- 阶段 2 会把 Maven 的 `Tests run: ...` 汇总行单独摘出来打印。
+- 阶段 5/6 在缺少 Docker 或后端未启动时打印 `SKIPPED` 并继续（**不伪装成 PASS**）。
+- 全过程日志落在 `.workbuddy/logs/local-pipeline-<时间戳>.log`。
+
+### 环境规划
+
+| 维度 | 开发环境 dev | 类生产环境 staging | 生产环境 prod |
+| --- | --- | --- | --- |
+| 用途 | 本地开发与联调 | 集成验证、答辩演示 | 正式对外服务 |
+| 部署方式 | IDEA 直跑 + `vite dev` | docker compose 单机 | docker compose + Nginx 反代 |
+| 数据库 | 本机 MySQL 8 `education_system` | 容器 MySQL 8 `education_system_staging` | 容器 MySQL 8 `education_system`，每日备份 |
+| 缓存 | 本机 Redis | 容器 Redis 7 | 容器 Redis 7 + 持久化卷 |
+| 配置来源 | `application.yml` 默认值 | 环境变量 `RUOYI_DB_*` | 环境变量 + 密钥管理 |
+| 前端 API 前缀 | `/dev-api` | `/stage-api` | `/prod-api`（Nginx 反代并剥离前缀） |
+| 日志级别 | `com.ruoyi: debug` | `com.ruoyi: info` | `com.ruoyi: warn` |
+| 访问控制 | 无 | 内网 + 基础认证 | 公网 + HTTPS |
+
+**部署策略：金丝雀发布。** 本项目是 docker compose 单机部署、没有 K8s，滚动发布所依赖的
+编排与就绪探针不具备；蓝绿发布在单机上要同时维持两套完整实例、资源翻倍，且若依用 Redis
+存登录态、两套实例会话不共享，切换时会把正在报修的用户踢下线。金丝雀只需在 Nginx
+`upstream` 里给新版本一个较小权重（5% → 50% → 100%），出错时把权重改回 0 即可秒级回滚。
+放量观察窗口与回滚阈值见《CI/CD 部署方案》。
 
 ## 项目约定
 
