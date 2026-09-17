@@ -1,0 +1,14 @@
+# Production hardening overrides. Enable with: spring.profiles.active=druid,prod
+swagger:
+  enabled: false
+
+spring:
+  datasource:
+    druid:
+      statViewServlet:
+        enabled: false
+
+logging:
+  level:
+    com.ruoyi: info
+    org.springframework: warn

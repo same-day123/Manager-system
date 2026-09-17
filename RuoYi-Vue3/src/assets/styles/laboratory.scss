@@ -1,0 +1,103 @@
+/**
+ * 实验室模块业务页（房间 / 资产 / 报修）统一视觉规范。
+ *
+ * 背景：这三个页面的根节点都挂了 `laboratory-page` 类，但此前全项目没有任何地方定义它，
+ * 业务页因此停留在若依默认样式（白底、表格直接贴边）；
+ * 而首页 views/index.vue 已经是另一套卡片化设计（.lab-dashboard）。
+ * 这里把首页用到的色板沉淀成变量并复用到业务页，让两处不再靠人工对齐。
+ *
+ * 维护提示：调整配色时优先改这里的变量；首页 .lab-dashboard 里的硬编码色值是同一套，
+ * 两边必须一起改，改完在浏览器里对照首页与任一业务页确认观感一致。
+ */
+
+$lab-page-bg: #f4f7fb; // 页面底色，与首页 .lab-dashboard 一致
+$lab-card-bg: #ffffff; // 卡片底色
+$lab-border: #d9e2ef; // 卡片描边
+$lab-text: #172033; // 主文字
+$lab-text-sub: #667085; // 次要文字
+$lab-radius: 8px; // 统一圆角
+
+.laboratory-page {
+  // 84 = 顶部导航 50 + 标签栏 34，与首页 .lab-dashboard 取同一个可视高度基准
+  min-height: calc(100vh - 84px);
+  padding: 18px 20px 24px;
+  background: $lab-page-bg;
+  color: $lab-text;
+}
+
+/**
+ * 搜索区与工具栏行拼成一张卡片：
+ * 搜索区只留上圆角、工具行只留下圆角，接缝处把相邻的边框归零，视觉上合并为一张卡。
+ */
+.laboratory-page > .el-form {
+  padding: 16px 16px 0;
+  margin-bottom: 0 !important;
+  border: 1px solid $lab-border;
+  border-bottom: 0;
+  border-radius: $lab-radius $lab-radius 0 0;
+  background: $lab-card-bg;
+}
+
+.laboratory-page > .el-row.mb8 {
+  padding: 12px 16px;
+  margin-bottom: 0 !important;
+  border: 1px solid $lab-border;
+  border-top: 0;
+  border-radius: 0 0 $lab-radius $lab-radius;
+  background: $lab-card-bg;
+}
+
+/**
+ * 搜索区被 RightToolbar 收起后，工具栏行成为卡片顶部，
+ * 若仍用「下圆角」会露出两条直角边。
+ * v-show=false 的元素只是内联 display: none，依旧占着前一个兄弟节点的位置，
+ * 所以这里叠一个属性选择器来识别折叠态。
+ */
+.laboratory-page > .el-form[style*="display: none"] + .el-row.mb8 {
+  border-top: 1px solid $lab-border;
+  border-radius: $lab-radius;
+}
+
+/** 表格独立成第二张卡片，与上方留出间距形成层次 */
+.laboratory-page > .el-table {
+  margin-top: 14px;
+  overflow: hidden; // 截图表头的直角背景，否则会从圆角外面露出来
+  border: 1px solid $lab-border;
+  border-radius: $lab-radius;
+  background: $lab-card-bg;
+}
+
+/**
+ * 若依给分页容器设了白底——但那条规则不在全局样式里，而在
+ * components/Pagination/index.vue 的 <style scoped> 中，编译后形如
+ * `.pagination-container[data-v-*]`，权重与本条**相同**（都是两个选择器）。
+ * 组件样式是随异步路由 chunk 后加载的，同权重下后者胜，会盖掉这里，
+ * 所以在灰底页面上仍会残留一条突兀的白条。必须加 !important 才能稳定生效。
+ */
+.laboratory-page .pagination-container {
+  background: transparent !important;
+}
+
+/**
+ * 表格内的双行信息单元：主信息在上、次要信息在下。
+ * 用于把「资产名称 + 资产编号」「申请人 + 联系电话」这类同一实体的两种标识压进一列，
+ * 在不丢数据的前提下压缩表格总宽度。
+ *
+ * 这些类名必须留在全局样式里——它们渲染在 el-table 内部，
+ * 页面 <style scoped> 的属性选择器够不到。
+ */
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.cell-stack .cell-main {
+  color: $lab-text;
+}
+
+.cell-stack .cell-sub {
+  color: $lab-text-sub;
+  font-size: 12px;
+}

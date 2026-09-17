@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.laboratory.mapper.LabRepairMapper">
+
+    <resultMap type="LabRepair" id="LabRepairResult">
+        <result property="repairId" column="repair_id" />
+        <result property="repairCode" column="repair_code" />
+        <result property="assetId" column="asset_id" />
+        <result property="assetName" column="asset_name" />
+        <result property="assetCode" column="asset_code" />
+        <result property="roomName" column="room_name" />
+        <result property="faultDescription" column="fault_description" />
+        <result property="faultLevel" column="fault_level" />
+        <result property="applicantId" column="applicant_id" />
+        <result property="applicantName" column="applicant_name" />
+        <result property="applicantPhone" column="applicant_phone" />
+        <result property="repairUserId" column="repair_user_id" />
+        <result property="repairUserName" column="repair_user_name" />
+        <result property="repairCost" column="repair_cost" />
+        <result property="finishTime" column="finish_time" />
+        <result property="status" column="status" />
+        <result property="attachmentUrls" column="attachment_urls" />
+        <result property="rating" column="rating" />
+        <result property="evaluationContent" column="evaluation_content" />
+        <result property="evaluationTime" column="evaluation_time" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectLabRepairVo">
+        select r.repair_id, r.repair_code, r.asset_id, a.asset_name, a.asset_code, room.room_name,
+               r.fault_description, r.fault_level, r.applicant_id, r.applicant_name, r.applicant_phone,
+               r.repair_user_id, r.repair_user_name, r.repair_cost, r.finish_time, r.status,
+               r.attachment_urls, r.rating, r.evaluation_content, r.evaluation_time, r.del_flag,
+               r.create_by, r.create_time, r.update_by, r.update_time, r.remark
+        from lab_repair r
+        left join lab_asset a on a.asset_id = r.asset_id
+        left join lab_room room on room.room_id = a.room_id
+    </sql>
+
+    <select id="selectLabRepairByRepairId" parameterType="Long" resultMap="LabRepairResult">
+        <include refid="selectLabRepairVo"/>
+        where r.repair_id = #{repairId} and r.del_flag = '0'
+    </select>
+
+    <select id="selectLabRepairList" parameterType="LabRepair" resultMap="LabRepairResult">
+        <include refid="selectLabRepairVo"/>
+        <where>
+            <if test="repairCode != null and repairCode != ''">and r.repair_code = #{repairCode}</if>
+            <if test="assetId != null">and r.asset_id = #{assetId}</if>
+            <if test="assetName != null and assetName != ''">and a.asset_name like concat('%', #{assetName}, '%')</if>
+            <if test="faultLevel != null and faultLevel != ''">and r.fault_level = #{faultLevel}</if>
+            <if test="applicantId != null">and r.applicant_id = #{applicantId}</if>
+            <if test="applicantName != null and applicantName != ''">and r.applicant_name like concat('%', #{applicantName}, '%')</if>
+            <if test="repairUserId != null">and r.repair_user_id = #{repairUserId}</if>
+            <if test="status != null and status != ''">and r.status = #{status}</if>
+            <if test="delFlag != null and delFlag != ''">and r.del_flag = #{delFlag}</if>
+        </where>
+        order by r.repair_id desc
+    </select>
+
+    <insert id="insertLabRepair" parameterType="LabRepair" useGeneratedKeys="true" keyProperty="repairId">
+        insert into lab_repair
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="repairCode != null and repairCode != ''">repair_code,</if>
+            <if test="assetId != null">asset_id,</if>
+            <if test="faultDescription != null and faultDescription != ''">fault_description,</if>
+            <if test="faultLevel != null and faultLevel != ''">fault_level,</if>
+            <if test="applicantId != null">applicant_id,</if>
+            <if test="applicantName != null and applicantName != ''">applicant_name,</if>
+            <if test="applicantPhone != null and applicantPhone != ''">applicant_phone,</if>
+            <if test="repairUserId != null">repair_user_id,</if>
+            <if test="repairUserName != null and repairUserName != ''">repair_user_name,</if>
+            <if test="repairCost != null">repair_cost,</if>
+            <if test="finishTime != null">finish_time,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="attachmentUrls != null and attachmentUrls != ''">attachment_urls,</if>
+            <if test="rating != null">rating,</if>
+            <if test="evaluationContent != null and evaluationContent != ''">evaluation_content,</if>
+            <if test="evaluationTime != null">evaluation_time,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="repairCode != null and repairCode != ''">#{repairCode},</if>
+            <if test="assetId != null">#{assetId},</if>
+            <if test="faultDescription != null and faultDescription != ''">#{faultDescription},</if>
+            <if test="faultLevel != null and faultLevel != ''">#{faultLevel},</if>
+            <if test="applicantId != null">#{applicantId},</if>
+            <if test="applicantName != null and applicantName != ''">#{applicantName},</if>
+            <if test="applicantPhone != null and applicantPhone != ''">#{applicantPhone},</if>
+            <if test="repairUserId != null">#{repairUserId},</if>
+            <if test="repairUserName != null and repairUserName != ''">#{repairUserName},</if>
+            <if test="repairCost != null">#{repairCost},</if>
+            <if test="finishTime != null">#{finishTime},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="attachmentUrls != null and attachmentUrls != ''">#{attachmentUrls},</if>
+            <if test="rating != null">#{rating},</if>
+            <if test="evaluationContent != null and evaluationContent != ''">#{evaluationContent},</if>
+            <if test="evaluationTime != null">#{evaluationTime},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateLabRepair" parameterType="LabRepair">
+        update lab_repair
+        <set>
+            <if test="repairCode != null and repairCode != ''">repair_code = #{repairCode},</if>
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="faultDescription != null and faultDescription != ''">fault_description = #{faultDescription},</if>
+            <if test="faultLevel != null and faultLevel != ''">fault_level = #{faultLevel},</if>
+            <if test="applicantId != null">applicant_id = #{applicantId},</if>
+            <if test="applicantName != null and applicantName != ''">applicant_name = #{applicantName},</if>
+            <if test="applicantPhone != null and applicantPhone != ''">applicant_phone = #{applicantPhone},</if>
+            <if test="repairUserId != null">repair_user_id = #{repairUserId},</if>
+            <if test="repairUserName != null and repairUserName != ''">repair_user_name = #{repairUserName},</if>
+            <if test="repairCost != null">repair_cost = #{repairCost},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="attachmentUrls != null">attachment_urls = #{attachmentUrls},</if>
+            <if test="rating != null">rating = #{rating},</if>
+            <if test="evaluationContent != null">evaluation_content = #{evaluationContent},</if>
+            <if test="evaluationTime != null">evaluation_time = #{evaluationTime},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where repair_id = #{repairId}
+    </update>
+
+    <delete id="deleteLabRepairByRepairId" parameterType="Long">
+        update lab_repair set del_flag = '2', update_time = sysdate() where repair_id = #{repairId}
+    </delete>
+
+    <delete id="deleteLabRepairByRepairIds" parameterType="Long">
+        update lab_repair set del_flag = '2', update_time = sysdate() where repair_id in
+        <foreach item="repairId" collection="array" open="(" separator="," close=")">
+            #{repairId}
+        </foreach>
+    </delete>
+</mapper>

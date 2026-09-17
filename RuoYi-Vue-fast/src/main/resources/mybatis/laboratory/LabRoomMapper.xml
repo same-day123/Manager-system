@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.laboratory.mapper.LabRoomMapper">
+
+    <resultMap type="LabRoom" id="LabRoomResult">
+        <result property="roomId" column="room_id" />
+        <result property="roomName" column="room_name" />
+        <result property="roomNo" column="room_no" />
+        <result property="collegeName" column="college_name" />
+        <result property="managerId" column="manager_id" />
+        <result property="managerName" column="manager_name" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectLabRoomVo">
+        select room_id, room_name, room_no, college_name, manager_id, manager_name,
+               status, del_flag, create_by, create_time, update_by, update_time, remark
+        from lab_room
+    </sql>
+
+    <select id="selectLabRoomByRoomId" parameterType="Long" resultMap="LabRoomResult">
+        <include refid="selectLabRoomVo"/>
+        where room_id = #{roomId} and del_flag = '0'
+    </select>
+
+    <select id="selectLabRoomByRoomName" parameterType="String" resultMap="LabRoomResult">
+        <include refid="selectLabRoomVo"/>
+        where room_name = #{roomName} and del_flag = '0' limit 1
+    </select>
+
+    <select id="selectLabRoomList" parameterType="LabRoom" resultMap="LabRoomResult">
+        <include refid="selectLabRoomVo"/>
+        <where>
+            <if test="roomName != null and roomName != ''">and room_name like concat('%', #{roomName}, '%')</if>
+            <if test="roomNo != null and roomNo != ''">and room_no like concat('%', #{roomNo}, '%')</if>
+            <if test="collegeName != null and collegeName != ''">and college_name like concat('%', #{collegeName}, '%')</if>
+            <if test="managerName != null and managerName != ''">and manager_name like concat('%', #{managerName}, '%')</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+            <if test="delFlag != null and delFlag != ''">and del_flag = #{delFlag}</if>
+        </where>
+        order by room_id desc
+    </select>
+
+    <select id="checkRoomNoUnique" parameterType="String" resultMap="LabRoomResult">
+        <include refid="selectLabRoomVo"/>
+        where room_no = #{roomNo} and del_flag = '0' limit 1
+    </select>
+
+    <insert id="insertLabRoom" parameterType="LabRoom" useGeneratedKeys="true" keyProperty="roomId">
+        insert into lab_room
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="roomName != null and roomName != ''">room_name,</if>
+            <if test="roomNo != null and roomNo != ''">room_no,</if>
+            <if test="collegeName != null">college_name,</if>
+            <if test="managerId != null">manager_id,</if>
+            <if test="managerName != null">manager_name,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="roomName != null and roomName != ''">#{roomName},</if>
+            <if test="roomNo != null and roomNo != ''">#{roomNo},</if>
+            <if test="collegeName != null">#{collegeName},</if>
+            <if test="managerId != null">#{managerId},</if>
+            <if test="managerName != null">#{managerName},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateLabRoom" parameterType="LabRoom">
+        update lab_room
+        <set>
+            <if test="roomName != null and roomName != ''">room_name = #{roomName},</if>
+            <if test="roomNo != null and roomNo != ''">room_no = #{roomNo},</if>
+            <if test="collegeName != null">college_name = #{collegeName},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+            <if test="managerName != null">manager_name = #{managerName},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where room_id = #{roomId}
+    </update>
+
+    <delete id="deleteLabRoomByRoomId" parameterType="Long">
+        update lab_room set del_flag = '2', update_time = sysdate() where room_id = #{roomId}
+    </delete>
+
+    <delete id="deleteLabRoomByRoomIds" parameterType="Long">
+        update lab_room set del_flag = '2', update_time = sysdate() where room_id in
+        <foreach item="roomId" collection="array" open="(" separator="," close=")">
+            #{roomId}
+        </foreach>
+    </delete>
+</mapper>

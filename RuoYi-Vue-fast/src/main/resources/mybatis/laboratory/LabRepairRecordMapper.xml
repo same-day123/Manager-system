@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.laboratory.mapper.LabRepairRecordMapper">
+
+    <resultMap type="LabRepairRecord" id="LabRepairRecordResult">
+        <result property="recordId" column="record_id" />
+        <result property="repairId" column="repair_id" />
+        <result property="actionName" column="action_name" />
+        <result property="fromStatus" column="from_status" />
+        <result property="toStatus" column="to_status" />
+        <result property="operatorName" column="operator_name" />
+        <result property="recordContent" column="record_content" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <select id="selectLabRepairRecordList" parameterType="Long" resultMap="LabRepairRecordResult">
+        select record_id, repair_id, action_name, from_status, to_status, operator_name,
+               record_content, create_by, create_time, remark
+        from lab_repair_record
+        where repair_id = #{repairId}
+        order by record_id asc
+    </select>
+
+    <insert id="insertLabRepairRecord" parameterType="LabRepairRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into lab_repair_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="repairId != null">repair_id,</if>
+            <if test="actionName != null and actionName != ''">action_name,</if>
+            <if test="fromStatus != null and fromStatus != ''">from_status,</if>
+            <if test="toStatus != null and toStatus != ''">to_status,</if>
+            <if test="operatorName != null and operatorName != ''">operator_name,</if>
+            <if test="recordContent != null">record_content,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="repairId != null">#{repairId},</if>
+            <if test="actionName != null and actionName != ''">#{actionName},</if>
+            <if test="fromStatus != null and fromStatus != ''">#{fromStatus},</if>
+            <if test="toStatus != null and toStatus != ''">#{toStatus},</if>
+            <if test="operatorName != null and operatorName != ''">#{operatorName},</if>
+            <if test="recordContent != null">#{recordContent},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+</mapper>

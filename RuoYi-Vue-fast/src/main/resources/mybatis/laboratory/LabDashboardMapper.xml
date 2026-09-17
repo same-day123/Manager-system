@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.laboratory.mapper.LabDashboardMapper">
+
+    <select id="selectAssetTotal" resultType="Long">
+        select count(1) from lab_asset where del_flag = '0'
+    </select>
+
+    <select id="selectRepairingAssetTotal" resultType="Long">
+        select count(1) from lab_asset where del_flag = '0' and status = '2'
+    </select>
+
+    <select id="selectPendingRepairTotal" resultType="Long">
+        select count(1) from lab_repair
+        where del_flag = '0' and status = '0'
+        <if test="applicantId != null">and applicant_id = #{applicantId}</if>
+    </select>
+
+    <select id="selectFinishedRepairTotal" resultType="Long">
+        select count(1) from lab_repair
+        where del_flag = '0' and status = '3'
+        <if test="applicantId != null">and applicant_id = #{applicantId}</if>
+    </select>
+
+    <select id="selectRepairTrend" resultType="java.util.HashMap">
+        select date_format(create_time, '%m-%d') as name, count(1) as value
+        from lab_repair
+        where del_flag = '0'
+          and create_time >= date_sub(curdate(), interval 6 day)
+          <if test="applicantId != null">and applicant_id = #{applicantId}</if>
+        group by date_format(create_time, '%m-%d')
+        order by min(create_time)
+    </select>
+
+    <select id="selectFaultLevelDistribution" resultType="java.util.HashMap">
+        select fault_level as name, count(1) as value
+        from lab_repair
+        where del_flag = '0'
+          <if test="applicantId != null">and applicant_id = #{applicantId}</if>
+        group by fault_level
+        order by fault_level
+    </select>
+
+    <select id="selectRoomRepairRanking" resultType="java.util.HashMap">
+        select ifnull(room.room_name, '未分配实验室') as name, count(1) as value
+        from lab_repair r
+        left join lab_asset a on a.asset_id = r.asset_id
+        left join lab_room room on room.room_id = a.room_id
+        where r.del_flag = '0'
+          <if test="applicantId != null">and r.applicant_id = #{applicantId}</if>
+        group by ifnull(room.room_name, '未分配实验室')
+        order by value desc
+        limit 8
+    </select>
+
+    <select id="selectRepairCostTrend" resultType="java.util.HashMap">
+        select date_format(create_time, '%m-%d') as name, ifnull(sum(repair_cost), 0) as value
+        from lab_repair
+        where del_flag = '0'
+          and create_time >= date_sub(curdate(), interval 6 day)
+          <if test="applicantId != null">and applicant_id = #{applicantId}</if>
+        group by date_format(create_time, '%m-%d')
+        order by min(create_time)
+    </select>
+</mapper>

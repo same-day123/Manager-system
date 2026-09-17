@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.laboratory.mapper.LabAssetMapper">
+
+    <resultMap type="LabAsset" id="LabAssetResult">
+        <result property="assetId" column="asset_id" />
+        <result property="assetCode" column="asset_code" />
+        <result property="assetName" column="asset_name" />
+        <result property="assetType" column="asset_type" />
+        <result property="model" column="model" />
+        <result property="price" column="price" />
+        <result property="purchaseDate" column="purchase_date" />
+        <result property="roomId" column="room_id" />
+        <result property="roomName" column="room_name" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectLabAssetVo">
+        select a.asset_id, a.asset_code, a.asset_name, a.asset_type, a.model, a.price, a.purchase_date,
+               a.room_id, r.room_name, a.status, a.del_flag, a.create_by, a.create_time, a.update_by,
+               a.update_time, a.remark
+        from lab_asset a
+        left join lab_room r on r.room_id = a.room_id
+    </sql>
+
+    <select id="selectLabAssetByAssetId" parameterType="Long" resultMap="LabAssetResult">
+        <include refid="selectLabAssetVo"/>
+        where a.asset_id = #{assetId} and a.del_flag = '0'
+    </select>
+
+    <select id="selectLabAssetList" parameterType="LabAsset" resultMap="LabAssetResult">
+        <include refid="selectLabAssetVo"/>
+        <where>
+            <if test="assetCode != null and assetCode != ''">and a.asset_code = #{assetCode}</if>
+            <if test="assetName != null and assetName != ''">and a.asset_name like concat('%', #{assetName}, '%')</if>
+            <if test="assetType != null and assetType != ''">and a.asset_type = #{assetType}</if>
+            <if test="roomId != null">and a.room_id = #{roomId}</if>
+            <if test="status != null and status != ''">and a.status = #{status}</if>
+            <if test="delFlag != null and delFlag != ''">and a.del_flag = #{delFlag}</if>
+        </where>
+        order by a.asset_id desc
+    </select>
+
+    <select id="checkAssetCodeUnique" parameterType="String" resultMap="LabAssetResult">
+        <include refid="selectLabAssetVo"/>
+        where a.asset_code = #{assetCode} and a.del_flag = '0' limit 1
+    </select>
+
+    <select id="countLabAssetByRoomId" parameterType="Long" resultType="int">
+        select count(1) from lab_asset where room_id = #{roomId} and del_flag = '0'
+    </select>
+
+    <insert id="insertLabAsset" parameterType="LabAsset" useGeneratedKeys="true" keyProperty="assetId">
+        insert into lab_asset
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="assetCode != null and assetCode != ''">asset_code,</if>
+            <if test="assetName != null and assetName != ''">asset_name,</if>
+            <if test="assetType != null and assetType != ''">asset_type,</if>
+            <if test="model != null and model != ''">model,</if>
+            <if test="price != null">price,</if>
+            <if test="purchaseDate != null">purchase_date,</if>
+            <if test="roomId != null">room_id,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="assetCode != null and assetCode != ''">#{assetCode},</if>
+            <if test="assetName != null and assetName != ''">#{assetName},</if>
+            <if test="assetType != null and assetType != ''">#{assetType},</if>
+            <if test="model != null and model != ''">#{model},</if>
+            <if test="price != null">#{price},</if>
+            <if test="purchaseDate != null">#{purchaseDate},</if>
+            <if test="roomId != null">#{roomId},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateLabAsset" parameterType="LabAsset">
+        update lab_asset
+        <set>
+            <if test="assetCode != null and assetCode != ''">asset_code = #{assetCode},</if>
+            <if test="assetName != null and assetName != ''">asset_name = #{assetName},</if>
+            <if test="assetType != null">asset_type = #{assetType},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="purchaseDate != null">purchase_date = #{purchaseDate},</if>
+            <if test="roomId != null">room_id = #{roomId},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where asset_id = #{assetId}
+    </update>
+
+    <delete id="deleteLabAssetByAssetId" parameterType="Long">
+        update lab_asset set del_flag = '2', update_time = sysdate() where asset_id = #{assetId}
+    </delete>
+
+    <delete id="deleteLabAssetByAssetIds" parameterType="Long">
+        update lab_asset set del_flag = '2', update_time = sysdate() where asset_id in
+        <foreach item="assetId" collection="array" open="(" separator="," close=")">
+            #{assetId}
+        </foreach>
+    </delete>
+</mapper>
