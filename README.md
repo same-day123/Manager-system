@@ -168,11 +168,12 @@ Service 声明事件 → LabRecordFactory.assetRecord/repairRecord(...) 组装 �
 重复跑不会报错也不会造重复数据。**`ry_20260417.sql` 是例外**：它是若依官方脚本，内部是
 `drop table` + `create table`，重复执行会清空 `sys_*` 的数据，**只在空库上跑一次**。
 
-另有 3 个**按需执行、不参与上面顺序**的维护脚本：
+另有 4 个**按需执行、不参与上面顺序**的维护脚本：
 
 | 脚本 | 什么时候用 |
 | --- | --- |
 | `laboratory_index_fix.sql` | **老库纠偏**：删掉线上库那两个与逻辑删除冲突的唯一索引（`uni_asset_code` / `uni_repair_code`），并补齐缺失的普通索引。空库重建时**不需要**跑它（`laboratory_schema.sql` 建的表本来就没有唯一索引） |
+| `laboratory_demo_refresh.sql` | **演示数据校准**（幂等，**答辩/演示前跑一次**）：把「维修中、却没有任何在途工单」的孤儿资产归位，并把演示报修单日期平移回**近 7 天**——首页那两张趋势图只统计近 7 天，**报修单有编号幂等保护（只插不更新），日期会随日子一天天滑出窗口、图就变空线**，这不是代码 bug 而是演示数据的自然老化 |
 | `laboratory_cleanup.sql` | 界面精简（隐藏监控/工具入口、把「系统管理」改名），与 `laboratory_menu_role.sql` 末尾内容重复 |
 | `quartz.sql` | 若依定时任务表，只有启用 Quartz 时才需要 |
 

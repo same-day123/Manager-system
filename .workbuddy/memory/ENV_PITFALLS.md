@@ -137,6 +137,13 @@
 - 构建日志统一放 `.workbuddy/logs/`。
 - **PowerShell 抓不到 `git push` 输出**（退出 128 但日志空）：`2>&1 | Out-File` 会在原生命令写 stderr 时抛 `RemoteException` 中断管道。可行写法：`$out = & git -c credential.helper= push --progress $url main:main 2>&1` 再 `Set-Content` 落盘，并设 `GIT_TERMINAL_PROMPT=0` / `GCM_INTERACTIVE=never`。`cmd /c` 被 PowerShell 工具安全策略拦截，不可用。
 
+## 数据库（MySQL）操作坑
+- **在 Git Bash 里跑 `mysql.exe` 最省事，且中文完好**：`"/d/Study_Running/MySQL/mysql-8.0.34-winx64/bin/mysql.exe" -uroot -p123456 --default-character-set=utf8mb4 <脚本.sql` —— 用 **`<` 重定向直接喂文件**即可（bash 传的是字节流，UTF-8 原样进去）。
+  ⚠️ **别走 PowerShell 工具做这件事**：2026-09-17 实测 `& mysql.exe ... | Out-String` / `$out = & mysql.exe ...` 均**拿不到任何输出**，只回一行「Command completed with exit code 0」，看着像"命令没跑"，实际是 stdout 被吞（与 ENV 里那条 "PowerShell 吞 node stdout" 同源）。
+- **语法可用性（MySQL 8.0.34 实测）**：CTE（`with x as (...) select ... from x`）、`set @v := ...`、多表 `update a join b on ... set ...`、`update t ... where not exists (select ... from 另一张表)` 全部可用；**`update` 的子查询不能来自被更新的同一张表**（这条限制照旧）。
+- **改真实库前先克隆验证**：`mysqldump -uroot -p<pwd> --default-character-set=utf8mb4 --single-transaction --skip-add-locks <库> | mysql -uroot -p<pwd> --default-character-set=utf8mb4 <新库>` —— **两端都要带 `--default-character-set=utf8mb4`**，缺一端中文就乱码。克隆库上跑完脚本 + 断言再决定动不动真实库，**验证完把影子库 drop 掉**。
+- **脚本改动要"双向验证"**：`空库按 [N/7] 顺序重建` 与 `克隆真实库定点修` 是两条不同路径，**结果可能不一样**（本次重建路径资产 25 台、克隆路径 32 台），只验一条会漏掉真实库的既有数据。
+
 ## Git 仓库坑（⚠️ 高价值）
 - **⚠️ 嵌套仓库（gitlink 160000）大坑**：`RuoYi-Vue-fast/`、`RuoYi-Vue3/` 原各带一个**上游 clone 来的内层 `.git`** → 外层 `git add -A` 会把整个目录记成 gitlink、**静默跳过全部源码**（首次提交只进 38 个文件、`git status` 却看着干净）。修法：把内层 `.git` **移动**到 `D:\code\_Manager_system_git_backup\`（可逆备份，未删），`git rm -r --cached` 掉 gitlink 再 `git add -A`。**别往这两个目录里 `git init`**。排查命令：`git ls-files -s | grep 160000`。
 - 首次推送已完成（`main = 57c81b9`，699 文件 / 82212 行）。每次 push 前自查：勿带 `.workbuddy/logs`、`target/`、`dist/`、`node_modules/`、密钥。

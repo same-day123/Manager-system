@@ -140,6 +140,57 @@ join sys_user u on u.user_name = seed.applicant_user
 join sys_user ru on ru.user_name = seed.repair_user
 where not exists (select 1 from lab_repair r where r.repair_code = seed.repair_code);
 
+-- ----------------------------------------------------------------------------
+-- 演示报修单（**在途 2 条**）：让「维修中资产」与「在途工单」自洽（见 D-24）
+-- 上面 4 条工单全部落在终态（3 已完成 / 4 已拒绝），而下方 lab_asset 里有 2 台资产
+-- status='2' 维修中（备注"报修中资产演示"）——**资产在修、却没有任何工单可点开**。
+-- 业务规则只有单向的「提交报修 → 资产置维修中」，所以这不算规则错误，但答辩开场
+-- 画面会出现「维修中资产 2 / 待处理工单 0」，观众第一反应是"数据坏了"。
+-- 这里补上这两台资产对应的在途工单：
+--   1. BX202607020005 待审核（status '0'）→ 现场可演示**审核**流程；
+--   2. BX202607020006 维修中（status '2'）→ 现场可演示**状态推进**到已完成。
+-- 日期同样取相对当前时间，理由与上面 4 条完全一致。
+-- 注意 **repair_user 必须 left join**：待审核单还没有维修人，用 join 会让整行插不进去。
+-- ----------------------------------------------------------------------------
+insert into lab_repair (
+    repair_code, asset_id, fault_description, fault_level,
+    applicant_id, applicant_name, applicant_phone,
+    repair_user_id, repair_user_name, repair_cost, finish_time,
+    status, del_flag, create_by, create_time, remark
+)
+select seed.repair_code,
+       a.asset_id,
+       seed.fault_description,
+       seed.fault_level,
+       u.user_id,
+       u.nick_name,
+       u.phonenumber,
+       ru.user_id,
+       ru.nick_name,
+       0.00,
+       null,
+       seed.status,
+       '0',
+       'admin',
+       seed.create_time,
+       seed.remark
+from (
+    select 'BX202607020005' as repair_code, 'LAB-DEMO-2026-009' as asset_code,
+           '靶场环境批量创建虚拟机时报存储卷挂载失败，疑为磁盘阵列故障。' as fault_description,
+           '3' as fault_level, 'student1' as applicant_user, null as repair_user,
+           '0' as status, date_sub(sysdate(), interval 1 day) as create_time,
+           '演示数据：待审核报修（可现场演示审核流程）' as remark
+    union all select 'BX202607020006', 'LAB-DEMO-2026-024',
+           '离心机运行时异响明显、转速不稳，需停机检修转子轴承。',
+           '2', 'student1', 'repair01',
+           '2', date_sub(sysdate(), interval 3 day),
+           '演示数据：维修中报修（可现场演示状态推进）'
+) seed
+join lab_asset a on a.asset_code = seed.asset_code and a.del_flag = '0'
+join sys_user u on u.user_name = seed.applicant_user
+left join sys_user ru on ru.user_name = seed.repair_user
+where not exists (select 1 from lab_repair r where r.repair_code = seed.repair_code);
+
 -- 报修处理记录：给上面第一张"已完成"的单子补一条状态流转记录，
 -- 让报修详情的处理时间线（US-03）有内容可看。
 insert into lab_repair_record (
@@ -147,10 +198,58 @@ insert into lab_repair_record (
     record_content, create_by, create_time, remark
 )
 select r.repair_id, '状态流转', '2', '3', 'admin',
-       '报修状态由「维修中」变更为「已完成」', 'admin', r.finish_time, '演示数据'
+       '报修状态由“维修中”变更为“已完成”', 'admin', r.finish_time, '演示数据'
 from lab_repair r
 where r.repair_code = 'BX202607020001'
   and not exists (
       select 1 from lab_repair_record rec
       where rec.repair_id = r.repair_id and rec.action_name = '状态流转'
+  );
+
+-- ----------------------------------------------------------------------------
+-- 在途 2 张单子的履历：让报修详情时间线在「未完结」状态下也有内容（US-03）。
+-- 文案与生产代码逐字对齐（LabRepairEvent + LabRepairServiceImpl:86~88）：
+--   提交报修 → '故障等级：%s；%s'，实参是 **fault_level 的原码**（'1'/'2'/'3'）与故障描述
+--   —— 生产代码直接透传 fault_level，没有转成"普通/紧急/严重"标签，这里保持一致，
+--   不"顺手美化"，否则又会出现脚本与运行时两套文案。
+-- ----------------------------------------------------------------------------
+insert into lab_repair_record (
+    repair_id, action_name, from_status, to_status, operator_name,
+    record_content, create_by, create_time, remark
+)
+select r.repair_id, '提交报修', null, '0', u.nick_name,
+       concat('故障等级：', r.fault_level, '；', r.fault_description),
+       u.user_name, r.create_time, '演示数据'
+from lab_repair r
+join sys_user u on u.user_name = 'student1'
+where r.repair_code in ('BX202607020005', 'BX202607020006')
+  and not exists (
+      select 1 from lab_repair_record rec
+      where rec.repair_id = r.repair_id and rec.action_name = '提交报修'
+  );
+
+-- 维修中那张单子再补两条流转记录，时间线才是完整的「待审核 → 待维修 → 维修中」。
+-- 幂等判据用 from_status + to_status（同一张单子不会重复走同一条边）。
+insert into lab_repair_record (
+    repair_id, action_name, from_status, to_status, operator_name,
+    record_content, create_by, create_time, remark
+)
+select r.repair_id, '状态流转', seed.from_status, seed.to_status, 'repair01',
+       seed.record_content, 'repair01', seed.create_time, '演示数据'
+from lab_repair r
+join (
+    select '0' as from_status, '1' as to_status,
+           '报修状态由“待审核”变更为“待维修”' as record_content,
+           date_sub(sysdate(), interval 2 day) as create_time
+    union all select '1', '2',
+           '报修状态由“待维修”变更为“维修中”',
+           date_sub(sysdate(), interval 2 day)
+) seed
+where r.repair_code = 'BX202607020006'
+  and not exists (
+      select 1 from lab_repair_record rec
+      where rec.repair_id = r.repair_id
+        and rec.action_name = '状态流转'
+        and rec.from_status = seed.from_status
+        and rec.to_status = seed.to_status
   );
