@@ -117,17 +117,25 @@ com.ruoyi.project.laboratory
 
 | 顺序 | 脚本 | 作用 |
 | :---: | --- | --- |
-| 1 | `ry_20260417.sql` | 若依基础表结构与基础数据 |
-| 2 | `laboratory_menu_role.sql` | 实验室菜单、按钮权限、`teacher` 角色 |
-| 3 | `laboratory_demo_seed.sql` | 6 个实验室演示角色及其菜单授权 |
-| 4 | `laboratory_user_seed.sql` | 演示账号与账号-角色绑定 |
-| 5 | `laboratory_upgrade.sql` | 报修附件/评价字段、履历表、字典、新增按钮权限 |
-| 6 | `laboratory_permission_fix.sql` | 看板独立权限 `laboratory:dashboard:view` 及其授权 |
+| 1 | `laboratory_schema.sql` | **实验室 5 张业务表**（房间 / 资产 / 报修 + 两张记录表） |
+| 2 | `ry_20260417.sql` | 若依基础表结构与基础数据 |
+| 3 | `laboratory_menu_role.sql` | 实验室菜单、按钮权限、`teacher` 角色 |
+| 4 | `laboratory_demo_seed.sql` | 6 个实验室演示角色及其菜单授权；演示房间与 25 条资产 |
+| 5 | `laboratory_user_seed.sql` | 演示账号与账号-角色绑定；演示报修单 4 条及处理记录 |
+| 6 | `laboratory_upgrade.sql` | 报修附件/评价字段兜底、两张记录表、4 组字典、新增按钮权限 |
+| 7 | `laboratory_permission_fix.sql` | 看板独立权限 `laboratory:dashboard:view` 及其授权 |
 
-脚本均写成**可重复执行**（`where not exists` / `if not exists` / 存储过程判列），重复跑不会报错也不会造重复数据。
+除第 2 个以外，脚本都写成**可重复执行**（`where not exists` / `if not exists` / 存储过程判列），
+重复跑不会报错也不会造重复数据。**`ry_20260417.sql` 是例外**：它是若依官方脚本，内部是
+`drop table` + `create table`，重复执行会清空 `sys_*` 的数据，**只在空库上跑一次**。
 
-另有 `laboratory_cleanup.sql`：它是**界面精简脚本**（隐藏监控/工具入口、把「系统管理」改名），
-与 `laboratory_menu_role.sql` 末尾内容重复，仅在需要精简菜单时执行。
+另有 3 个**按需执行、不参与上面顺序**的维护脚本：
+
+| 脚本 | 什么时候用 |
+| --- | --- |
+| `laboratory_index_fix.sql` | **老库纠偏**：删掉线上库那两个与逻辑删除冲突的唯一索引（`uni_asset_code` / `uni_repair_code`），并补齐缺失的普通索引。空库重建时**不需要**跑它（`laboratory_schema.sql` 建的表本来就没有唯一索引） |
+| `laboratory_cleanup.sql` | 界面精简（隐藏监控/工具入口、把「系统管理」改名），与 `laboratory_menu_role.sql` 末尾内容重复 |
+| `quartz.sql` | 若依定时任务表，只有启用 Quartz 时才需要 |
 
 ### 2. 启动后端
 

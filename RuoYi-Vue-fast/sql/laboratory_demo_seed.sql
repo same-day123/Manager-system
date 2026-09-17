@@ -1,9 +1,9 @@
 -- ============================================================================
--- [3/6] 实验室演示角色与演示资产
+-- [4/7] 实验室演示角色与演示资产
 -- 用途：创建 6 个实验室演示角色（lab_manager / asset_keeper / repair_engineer /
 --       room_keeper / student_assistant / lab_viewer），按角色分配实验室菜单权限，
 --       并插入演示用实验室房间、资产及资产履历数据
--- 依赖：laboratory_menu_role.sql
+-- 依赖：laboratory_schema.sql（五张业务表）、laboratory_menu_role.sql（菜单）
 -- 幂等：是（全部使用 where not exists 判定，可重复执行）
 -- 目标库：education_system
 -- ============================================================================
@@ -121,6 +121,34 @@ where (m.menu_id = @lab_menu_id or m.perms in (
 ))
   and @lab_viewer_role_id is not null
   and not exists (select 1 from sys_role_menu rm where rm.role_id = @lab_viewer_role_id and rm.menu_id = m.menu_id);
+
+-- ----------------------------------------------------------------------------
+-- 演示实验室房间
+-- **必须先于下方 lab_asset 的插入**：那 25 条资产的 room_id 直接写 1001~1004，
+-- 房间不在前面建好，资产的「所属实验室」就会整列为空（room_id 无外键，不会报错，
+-- 但列表页看起来像坏了）。room_id 显式指定为 1001~1005，与此前线上库保持一致。
+-- manager_id 留空：6 个演示账号要到 [5/7] laboratory_user_seed.sql 才创建，
+-- 此处无法解析其 user_id；管理员姓名先用岗位名占位。
+-- ----------------------------------------------------------------------------
+insert into lab_room (
+    room_id, room_no, room_name, college_name, manager_id, manager_name,
+    status, del_flag, create_by, create_time, remark
+)
+select * from (
+    select 1001 as room_id, '信工楼 A301' as room_no, '软件工程实验室' as room_name,
+           '计算机学院' as college_name, null as manager_id, '实验室管理员' as manager_name,
+           '0' as status, '0' as del_flag, 'admin' as create_by, sysdate() as create_time,
+           '用于软件工程课程实验和项目实训' as remark
+    union all select 1002, '信工楼 A305', '网络安全实验室', '计算机学院', null, '实验室管理员',
+                     '0', '0', 'admin', sysdate(), '用于网络攻防、密码学与安全运维实验'
+    union all select 1003, '理科楼 B204', '大学物理实验室', '物电学院', null, '实验室管理员',
+                     '0', '0', 'admin', sysdate(), '基础物理实验教学场地'
+    union all select 1004, '化学楼 C402', '分析化学实验室', '化学化工学院', null, '实验室管理员',
+                     '0', '0', 'admin', sysdate(), '化学分析与仪器测试实验室'
+    union all select 1005, '思学楼221', '计算机室', '信息学院', null, '王XX',
+                     '0', '0', 'admin', sysdate(), '公共机房'
+) seed
+where not exists (select 1 from lab_room r where r.room_id = seed.room_id);
 
 insert into lab_asset (
     asset_code, asset_name, asset_type, model, price, purchase_date,

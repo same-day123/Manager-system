@@ -1,9 +1,9 @@
 -- ============================================================================
--- [5/6] 实验室功能增强
--- 用途：为 lab_repair 表增补故障图片/评分/评价字段，创建 lab_repair_record
---       （报修处理记录）与 lab_asset_record（资产生命周期记录）两张表，
---       初始化 4 组业务字典，并补发资产导入、维修评价两个按钮权限
--- 依赖：laboratory_menu_role.sql、laboratory_demo_seed.sql
+-- [6/7] 实验室功能增强
+-- 用途：为 lab_repair 表增补故障图片/评分/评价字段（幂等兜底，建表脚本已带上这些列），
+--       创建 lab_repair_record（报修处理记录）与 lab_asset_record（资产生命周期记录）
+--       两张表，初始化 4 组业务字典，并补发资产导入、维修评价两个按钮权限
+-- 依赖：laboratory_schema.sql、laboratory_menu_role.sql、laboratory_demo_seed.sql
 -- 幂等：是（用 information_schema 判列 + 存储过程实现幂等；MySQL 不支持
 --       ADD COLUMN IF NOT EXISTS，所以这里的存储过程写法是必要的，请勿改成裸 ALTER）
 -- 目标库：education_system
