@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/>
+<title>CI/CD 部署方案</title>
+<style>
+  /* ---------- 字体与基础 ---------- */
+  :root{
+    --ink:#1a1a1a; --ink2:#444; --line:#b9b9b9; --hline:#5b3f2f;
+    --soft:#8a8a8a; --bg-soft:#f5f4f2;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"SimSun","宋体","Songti SC",serif;
+    font-size:10pt; line-height:1.5; color:var(--ink);
+    text-align:justify; text-justify:inter-ideograph;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  h1,h2,h3,h4,h5,h6{
+    font-family:"SimHei","黑体","Microsoft YaHei","微软雅黑",sans-serif;
+    color:#111; line-height:1.3; margin:0 0 .42em;
+    page-break-after:avoid; break-after:avoid;
+  }
+  h1{ font-size:17pt; text-align:center; margin:0 0 .9em; }
+  h2{ font-size:13pt; border-left:5px solid var(--hline); padding-left:.5em;
+      margin-top:1.15em; }
+  h3{ font-size:11pt; margin-top:.95em; }
+  h4{ font-size:10pt; margin-top:.8em; color:#222; }
+  p{ margin:0 0 .5em; }
+  strong{ font-family:"SimHei","黑体","Microsoft YaHei",sans-serif; font-weight:normal; }
+  code{
+    font-family:"Consolas","Courier New",monospace; font-size:9pt;
+    background:var(--bg-soft); border:1px solid #e2e0dd; border-radius:2px;
+    padding:0 2px;
+  }
+  pre{
+    background:#faf9f7; border:1px solid #e0dedb; border-left:3px solid var(--hline);
+    padding:.6em .8em; margin:.6em 0; page-break-inside:avoid; break-inside:avoid;
+    white-space:pre-wrap; word-break:break-all;
+  }
+  pre code{ background:none; border:0; padding:0; font-size:8.1pt; line-height:1.38; }
+  blockquote{
+    margin:.5em 0; padding:.45em .75em; background:#fbfaf8;
+    border-left:3px solid #c9c3bb; color:var(--ink2); font-size:9.5pt;
+  }
+  blockquote p:last-child{ margin-bottom:0; }
+  hr{ border:0; border-top:1px solid #ddd; margin:.9em 0; }
+  ul{ margin:.35em 0 .6em; padding-left:1.5em; }
+  li{ margin:.12em 0; }
+  .blank{ color:#999; letter-spacing:1px; }
+
+  /* ---------- 表格 ---------- */
+  table{
+    width:100%; border-collapse:collapse; margin:.5em 0 .75em;
+    font-size:8.4pt; page-break-inside:auto;
+  }
+  thead{ display:table-header-group; }
+  tr{ page-break-inside:avoid; break-inside:avoid; }
+  th,td{
+    border:1px solid var(--line); padding:2.5px 5px;
+    vertical-align:top; text-align:left; word-break:break-word;
+    line-height:1.42;
+  }
+  th{
+    font-family:"SimHei","黑体","Microsoft YaHei",sans-serif; font-weight:normal;
+    background:#eceae6; text-align:center;
+  }
+  td.ta-center,th.ta-center{ text-align:center; }
+  td.ta-right,th.ta-right{ text-align:right; }
+
+  /* ---------- 图 ---------- */
+  figure.fig{
+    margin:.8em 0 1em; text-align:center;
+    page-break-inside:avoid; break-inside:avoid;
+  }
+  figure.fig img{ max-width:100%; max-height:185mm; }
+  figure.fig figcaption{
+    font-family:"SimHei","黑体","Microsoft YaHei",sans-serif;
+    font-size:9pt; color:#555; margin-top:.45em;
+  }
+
+  /* ---------- 封面 ---------- */
+  .cover{ height:247mm; position:relative; page-break-after:always; break-after:page; }
+  .cover .band{ height:6px; background:var(--hline); margin:0 0 26mm; }
+  .cover .org{ font-family:"SimHei","黑体",sans-serif; font-size:12pt;
+               text-align:center; letter-spacing:.35em; color:#333; margin-bottom:6mm;}
+  .cover h1{ font-size:26pt; letter-spacing:.06em; margin:0 0 4mm; }
+  .cover .sub{ text-align:center; font-size:12pt; color:#555; letter-spacing:.2em;
+               margin-bottom:16mm; font-family:"SimHei","黑体",sans-serif; }
+  .cover .meta{ width:78%; margin:0 auto; }
+  .cover .meta table{ font-size:10.5pt; }
+  .cover .meta th{ background:none; border:0; font-family:"SimHei","黑体",sans-serif;
+                   width:34%; text-align:left; padding:5px 8px 5px 0; color:#333;}
+  .cover .meta td{ border:0; border-bottom:1px solid #cfcdc9; padding:5px 4px; }
+  .cover .foot{ position:absolute; bottom:6mm; width:100%; text-align:center;
+                font-size:9.5pt; color:#777; letter-spacing:.1em;}
+  .body{ page-break-before:auto; }
+</style></head>
+<body>
+  <section class="cover">
+    <div class="band"></div>
+    <div class="org">软件新技术专题 · 课程大作业</div>
+    <h1>CI/CD 部署方案</h1>
+    <div class="sub">高校实验室资产与报修管理平台</div>
+    <div class="meta"><table><tr><th>项目名称</th><td>高校实验室资产与报修管理平台</td></tr><tr><th>团队编号</th><td>第 6 组</td></tr><tr><th>团队成员</th><td>王旻辉、巴力江·托力肯别克、廖煌、迪丽热巴·阿布都西克尔</td></tr><tr><th>班级 / 学号</th><td>软件工程 2023-2 ／ 2311231056</td></tr><tr><th>二级学院 / 专业</th><td><code><span class="blank">____</span></code> ／ <code><span class="blank">____</span></code></td></tr><tr><th>授课教师</th><td>谭清萱</td></tr><tr><th>版本号</th><td>V1.0</td></tr><tr><th>日期</th><td><code><span class="blank">____</span></code></td></tr><tr><th>编写人 / 审核人</th><td><code><span class="blank">____</span></code> ／ <code><span class="blank">____</span></code></td></tr></table></div>
+    <div class="foot">第 6 组　·　软件工程 2023-2</div>
+  </section>
+  <section class="body">
+<blockquote><p>本文件是<strong>源稿</strong>（Markdown）。定稿流程：AI 出初稿 → 人工改写表述（防查重）→ 补封面信息 → 导出 PDF（须嵌入字体）。</p><p>导出前请把正文中的 <code><span class="blank">____</span></code> 与「待人工改写」标记全部清掉。</p></blockquote>
+<p><strong>修订历史</strong></p>
+<table><thead><tr><th>版本</th><th>日期</th><th>修订内容</th><th>修订人</th></tr></thead><tbody><tr><td>V0.1</td><td><code><span class="blank">____</span></code></td><td>初稿完成（AI 辅助生成，内容取自仓库真实 CI 与容器化文件）</td><td><code><span class="blank">____</span></code></td></tr><tr><td>V1.0</td><td><code><span class="blank">____</span></code></td><td>人工改写表述、补齐封面信息、定稿</td><td><code><span class="blank">____</span></code></td></tr></tbody></table>
+<hr/>
+<h2>编写说明与 AI 使用声明</h2>
+<p>本文档允许使用 AI 工具，但内容的准确性由本组负责。各章的生成方式如实声明如下：</p>
+<table><thead><tr><th>章节</th><th>生成方式</th><th>说明</th></tr></thead><tbody><tr><td>1 引言～2 环境规划</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>三环境差异取自 <code>docker-compose.yml</code> 与 README</td></tr><tr><td>3 流水线设计</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>与仓库 <code>.github/workflows/ci.yml</code> 四个 job 一一对应</td></tr><tr><td>4 容器化与配置管理</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>取自两个 Dockerfile、<code>nginx.conf</code>、<code>mysql-init.sh</code></td></tr><tr><td>5 部署策略</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>金丝雀选型理由为本组实际决策</td></tr><tr><td>6 验证与如实说明</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>「已验证」与「未验证」严格分开，不粉饰</td></tr></tbody></table>
+<blockquote><p><strong>防查重提示（提交前请删除本条）</strong>：本稿依据 <code>ci.yml</code>、Dockerfile、<code>docker-compose.yml</code>、README 与 T3/T4 留痕组织，</p><p>与仓库文件存在同源表述风险。定稿前必须人工通读重写并查重。</p></blockquote>
+<hr/>
+<h2>1 引言</h2>
+<p>本文档描述「高校实验室资产与报修管理平台」的持续集成与部署方案。系统后端为 Spring Boot 2.5.15（Java 8，Maven），前端为 Vue 3.5（Vite 6，Yarn），整体通过 Docker Compose 编排为单机部署单元。</p>
+<p>方案的核心原则有两条：<strong>构建与测试在推送时自动触发</strong>（质量门），<strong>发布动作与构建解耦</strong>（由 Nginx 上游权重控制放量）。部署策略选定<strong>金丝雀发布</strong>，理由见第 5 章。</p>
+<h2>2 环境规划（开发 / 类生产 / 生产）</h2>
+<table><thead><tr><th>维度</th><th>开发环境 dev</th><th>类生产 staging</th><th>生产 prod</th></tr></thead><tbody><tr><td>用途</td><td>本地开发与联调</td><td>集成验证、答辩演示</td><td>正式对外服务</td></tr><tr><td>部署方式</td><td>IDEA 直跑 + <code>vite dev</code></td><td>docker compose 单机</td><td>docker compose + Nginx 反代</td></tr><tr><td>数据库</td><td>本机 MySQL 8 <code>education_system</code></td><td>容器 MySQL 8 <code>education_system_staging</code></td><td>容器 MySQL 8 <code>education_system</code>，每日备份</td></tr><tr><td>缓存</td><td>本机 Redis</td><td>容器 Redis 7</td><td>容器 Redis 7 + 持久化卷</td></tr><tr><td>配置来源</td><td><code>application.yml</code> 默认值</td><td>环境变量 <code>RUOYI_DB_*</code></td><td>环境变量 + 密钥管理</td></tr><tr><td>前端 API 前缀</td><td><code>/dev-api</code></td><td><code>/stage-api</code></td><td><code>/prod-api</code>（Nginx 反代并剥离前缀）</td></tr><tr><td>日志级别</td><td><code>com.ruoyi: debug</code></td><td><code>com.ruoyi: info</code></td><td><code>com.ruoyi: warn</code></td></tr><tr><td>访问控制</td><td>无</td><td>内网 + 基础认证</td><td>公网 + HTTPS</td></tr></tbody></table>
+<p><strong>三环境差异的技术落地</strong>：<code>application*.yml</code> 配置文件<strong>在三个环境保持完全一致、一字不改</strong>，差异全部通过环境变量注入（<code>RUOYI_PROFILE</code>、<code>SPRING_REDIS_HOST/PORT</code>、<code>RUOYI_DB_URL/USERNAME/PASSWORD</code>）。生产与类生产在基础编排上再叠一层 <code>docker-compose.prod.yml</code>（端口只绑回环、口令必填、资源上限、<code>restart: always</code>）。</p>
+<h2>3 流水线设计</h2>
+<h3>3.1 全链路</h3>
+<p><code>代码提交 → 后端构建与测试 → 前端生产构建 → 打包产物 → 镜像构建 →（部署时）Nginx 权重放量</code></p>
+<p>流水线定义在 <code>.github/workflows/ci.yml</code>，由 GitHub Actions 执行，触发条件为推送到 <code>main</code>、发起 Pull Request、以及手动触发（<code>workflow_dispatch</code>，答辩演示时可免提交直接跑一次）。</p>
+<h3>3.2 四个 job</h3>
+<table><thead><tr><th class="ta-center">job</th><th>阶段</th><th>命令</th><th>产物</th><th class="ta-center">依赖</th></tr></thead><tbody><tr><td class="ta-center"><code>backend</code></td><td>后端构建与测试</td><td><code>mvn -B clean test</code>（JDK 8 temurin）</td><td>surefire 测试报告</td><td class="ta-center">—</td></tr><tr><td class="ta-center"><code>frontend</code></td><td>前端生产构建</td><td><code>yarn install --frozen-lockfile</code> + <code>yarn build:prod</code>（Node 22）</td><td><code>dist/</code></td><td class="ta-center">—</td></tr><tr><td class="ta-center"><code>package</code></td><td>打包可运行 jar</td><td><code>mvn -B package -DskipTests</code></td><td><code>target/ruoyi.jar</code></td><td class="ta-center">backend, frontend</td></tr><tr><td class="ta-center"><code>docker</code></td><td>镜像构建</td><td><code>build-push-action</code>（buildx，只 build 不 push） + <code>docker compose config</code> 语法门禁</td><td>后端/前端两个镜像</td><td class="ta-center">package</td></tr></tbody></table>
+<p>几个设计要点：</p>
+<ul><li><strong>测试绝不可跳过</strong>：<code>backend</code> job 的测试步骤<strong>不加 <code>-DskipTests</code></strong>；<code>package</code> job 里的 <code>-DskipTests</code> 是合法的——测试已在前置 job 跑过并通过，打包阶段只需产出 jar，避免重复执行。上传 surefire 报告用 <code>if: always()</code>，测试失败时报告更要留下以便定位。</li><li><strong>凭据零明文</strong>：<code>ci.yml</code> 内不出现任何密码，将来推镜像走 GitHub Secrets。</li><li><strong>前端必须走 Yarn</strong>：仓库只有 <code>yarn.lock</code> 没有 <code>package-lock.json</code>（若依源码的历史状态），<code>npm ci</code> 会因缺 lock 文件失败，故用 <code>corepack enable</code> + <code>yarn install --frozen-lockfile</code>。</li><li><strong>镜像只构建不推送</strong>：推送到 registry 需要凭据，答辩演示用本地镜像即可。</li></ul>
+<h3>3.3 本地等价流水线</h3>
+<p>真实流水线跑在 GitHub Actions；本地/答辩自检用 <code>deploy/local-pipeline.ps1</code> 按相同阶段顺序跑一遍，共 6 个阶段与上面 job 一一对应。实测结果：</p>
+<pre><code>PASS 4 / SKIPPED 2 / FAIL 0      总耗时 216.2 s</code></pre>
+<p>阶段 1~4（版本信息 / 后端构建与测试 / 前端构建 / 打包产物）全 PASS，产物 <code>ruoyi.jar</code> 85.1 MB；阶段 5~6（镜像构建 / 冒烟测试）因本机未安装 Docker 打印 <code>SKIPPED</code> 并继续——<strong>不伪装成 PASS</strong>。任一阶段失败即 <code>exit 1</code>。</p>
+<h2>4 容器化与配置管理</h2>
+<h3>4.1 服务编排</h3>
+<table><thead><tr><th>服务</th><th>镜像 / 构建源</th><th>关键设计</th></tr></thead><tbody><tr><td><code>mysql</code></td><td><code>mysql:8.0</code>（锁版本）</td><td>首次启动按 <code>deploy/mysql-init.sh</code> <strong>显式顺序</strong>导入 7 个 SQL；时区用数字偏移 <code>+08:00</code></td></tr><tr><td><code>redis</code></td><td><code>redis:7-alpine</code></td><td>若依强制依赖；命名卷持久化</td></tr><tr><td><code>lab-backend</code></td><td><code>./RuoYi-Vue-fast</code></td><td>非 root（uid 1000）、<code>TZ=Asia/Shanghai</code>、<code>/dev/tcp</code> 健康检查、exec 形式 ENTRYPOINT</td></tr><tr><td><code>lab-frontend</code></td><td><code>./RuoYi-Vue3</code></td><td>nginx 托管 <code>dist/</code>，<code>/prod-api/</code> 反代后端并剥离前缀</td></tr></tbody></table>
+<h3>4.2 SQL 初始化顺序（本项目最容易踩的坑）</h3>
+<p>不要将 <code>sql/*.sql</code> 直接挂进 <code>/docker-entrypoint-initdb.d/</code>——MySQL 官方镜像按<strong>文件名字母序</strong>执行初始化脚本，<code>laboratory_*</code> 会全部排在 <code>ry_*.sql</code> 之前，导致每个脚本都报「表不存在」。本仓库的解法是只挂一个显式排序的 <code>mysql-init.sh</code>，按 <code>[N/7]</code> 顺序执行 7 个脚本，且每个脚本自带序号标记、与脚本内 <code>for</code> 循环三方互校。</p>
+<p>另一个被排除的文件是 <code>quartz.sql</code>：后端 <code>ScheduleConfig.java</code> 整个类被注释、<code>resources/</code> 下无 <code>quartz.properties</code>，Quartz 走 Spring Boot 默认内存存储（<code>RAMJobStore</code>），<code>QRTZ_*</code> 表根本不需要，故不纳入初始化顺序。</p>
+<h3>4.3 nginx 反代的两个关键点</h3>
+<ul><li><code>proxy_pass http://lab-backend:8080/</code> 的<strong>末尾斜杠不能删</strong>——它是「剥离 <code>/prod-api/</code> 前缀」的关键，漏了会导致所有接口 404。</li><li><code>client_max_body_size 20m</code> 必须显式给出——nginx 默认仅 <code>1m</code>，而系统支持上传故障照片（后端允许单文件 10MB / 请求 20MB），缺了这行会拦截成 413，且后端日志毫无痕迹。</li></ul>
+<h3>4.4 配置与密钥管理</h3>
+<p>数据库/Redis/上传路径等差异全部经环境变量注入（见第 2 章），密钥经 <code>.env</code>（已被 <code>.gitignore</code> 忽略，不入库）与 GitHub Secrets 管理。生产镜像构建为两段式（Maven 构建 → JRE 8 运行），运行用户为非 root 的 uid 1000。</p>
+<h2>5 部署策略：金丝雀发布</h2>
+<p>在<strong>滚动 / 蓝绿 / 金丝雀</strong>三种常见策略中，本项目选定<strong>金丝雀发布</strong>，理由是排除法：</p>
+<ul><li><strong>滚动发布</strong>依赖容器编排平台的滚动更新与就绪探针，本项目是 docker compose 单机部署、无 K8s，编排能力不具备。</li><li><strong>蓝绿发布</strong>在单机上需同时维持两套完整实例，资源翻倍；且若依用 Redis 存登录态、两套实例会话不共享，切换时会把正在报修的用户踢下线。</li><li><strong>金丝雀发布</strong>只需在 Nginx <code>upstream</code> 里给新版本一个较小权重（如 5% → 50% → 100%），把少量流量导入新版本观察；出错时把权重改回 0 即可秒级回滚，无需额外基础设施。</li></ul>
+<p>放量窗口建议 10~15 分钟观察错误率与关键接口耗时，回滚阈值为「错误率超过 1% 或出现 5xx」即回退权重到 0。放量与回滚动作由 Nginx 配置控制，不属于 GitHub Actions 流水线的职责——<strong>构建负责「产出一个可信的镜像」，发布负责「控制流量」</strong>，二者解耦。</p>
+<h2>6 验证与如实说明</h2>
+<h3>6.1 已验证（两层证据，共 117 条断言全绿）</h3>
+<ul><li><strong>配置静态自洽性</strong>：<code>.workbuddy/tools/t4_verify.py</code>，<strong>94 条断言</strong>，覆盖 YAML 可解析、SQL 顺序与磁盘文件及脚本序号三方互校、nginx 前缀剥离与上传上限、Dockerfile 非 root 与健康检查、口令无明文、<code>.dockerignore</code> 该排的排了。</li><li><strong>环境变量绑定实证</strong>：<code>.workbuddy/tools/t4_env_binding_check.py</code> + <code>T4EnvBindingProbe.java</code>，<strong>23 条断言</strong>，用 Spring 真实属性源机制跑两套不同取值做对照——<code>raw:</code> 视图证明配置文件未被改动、<code>eff:</code> 视图证明 <code>RUOYI_PROFILE</code> / <code>SPRING_REDIS_HOST</code> 等确实盖得住写死的值，且 <code>application*.yml</code> 一字未改。</li></ul>
+<h3>6.2 未验证（环境不具备，如实说明）</h3>
+<p><strong>本机未安装 Docker，<code>docker compose up</code> 未实际执行</strong>，因此「容器真的能起、健康检查能通过、<code>docker compose ps</code> 显示 healthy」这一层<strong>尚未经过运行验证</strong>。上文 94+23 条断言证明的是「配置自洽 + 覆盖生效」，不等于「容器起来了」。</p>
+<p>任务书中要求的 <code>docker compose ps</code> 运行截图因此<strong>无法产出</strong>——本方案以「静态断言 + 环境变量绑定实证」作为替代证据，并在此明确区分「已证明的」与「未验证的」。完整运行验证留待具备 Docker 环境的机器执行，答辩口径按此实情说明。</p>
+<h3>6.3 任务卡本身的两处修正（如实记录）</h3>
+<p>撰写本方案时发现任务卡示例有两处缺口，产出文件均已修正：</p>
+<table><thead><tr><th>缺口</th><th>照抄的后果</th><th>修正</th></tr></thead><tbody><tr><td>环境变量清单漏 redis 主机/端口</td><td>容器能启动但登录页出不来验证码</td><td>补 <code>SPRING_REDIS_HOST/PORT</code> 覆盖</td></tr><tr><td>nginx 示例漏 <code>client_max_body_size</code></td><td>传故障照片被拦成 413</td><td>server 级与 <code>/prod-api/</code> 级各补 <code>20m</code></td></tr></tbody></table>
+  </section>
+</body></html>

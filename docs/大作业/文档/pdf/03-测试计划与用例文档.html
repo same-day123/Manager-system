@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/>
+<title>测试计划与用例文档</title>
+<style>
+  /* ---------- 字体与基础 ---------- */
+  :root{
+    --ink:#1a1a1a; --ink2:#444; --line:#b9b9b9; --hline:#5b3f2f;
+    --soft:#8a8a8a; --bg-soft:#f5f4f2;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"SimSun","宋体","Songti SC",serif;
+    font-size:10pt; line-height:1.5; color:var(--ink);
+    text-align:justify; text-justify:inter-ideograph;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  h1,h2,h3,h4,h5,h6{
+    font-family:"SimHei","黑体","Microsoft YaHei","微软雅黑",sans-serif;
+    color:#111; line-height:1.3; margin:0 0 .42em;
+    page-break-after:avoid; break-after:avoid;
+  }
+  h1{ font-size:17pt; text-align:center; margin:0 0 .9em; }
+  h2{ font-size:13pt; border-left:5px solid var(--hline); padding-left:.5em;
+      margin-top:1.15em; }
+  h3{ font-size:11pt; margin-top:.95em; }
+  h4{ font-size:10pt; margin-top:.8em; color:#222; }
+  p{ margin:0 0 .5em; }
+  strong{ font-family:"SimHei","黑体","Microsoft YaHei",sans-serif; font-weight:normal; }
+  code{
+    font-family:"Consolas","Courier New",monospace; font-size:9pt;
+    background:var(--bg-soft); border:1px solid #e2e0dd; border-radius:2px;
+    padding:0 2px;
+  }
+  pre{
+    background:#faf9f7; border:1px solid #e0dedb; border-left:3px solid var(--hline);
+    padding:.6em .8em; margin:.6em 0; page-break-inside:avoid; break-inside:avoid;
+    white-space:pre-wrap; word-break:break-all;
+  }
+  pre code{ background:none; border:0; padding:0; font-size:8.1pt; line-height:1.38; }
+  blockquote{
+    margin:.5em 0; padding:.45em .75em; background:#fbfaf8;
+    border-left:3px solid #c9c3bb; color:var(--ink2); font-size:9.5pt;
+  }
+  blockquote p:last-child{ margin-bottom:0; }
+  hr{ border:0; border-top:1px solid #ddd; margin:.9em 0; }
+  ul{ margin:.35em 0 .6em; padding-left:1.5em; }
+  li{ margin:.12em 0; }
+  .blank{ color:#999; letter-spacing:1px; }
+
+  /* ---------- 表格 ---------- */
+  table{
+    width:100%; border-collapse:collapse; margin:.5em 0 .75em;
+    font-size:8.4pt; page-break-inside:auto;
+  }
+  thead{ display:table-header-group; }
+  tr{ page-break-inside:avoid; break-inside:avoid; }
+  th,td{
+    border:1px solid var(--line); padding:2.5px 5px;
+    vertical-align:top; text-align:left; word-break:break-word;
+    line-height:1.42;
+  }
+  th{
+    font-family:"SimHei","黑体","Microsoft YaHei",sans-serif; font-weight:normal;
+    background:#eceae6; text-align:center;
+  }
+  td.ta-center,th.ta-center{ text-align:center; }
+  td.ta-right,th.ta-right{ text-align:right; }
+
+  /* ---------- 图 ---------- */
+  figure.fig{
+    margin:.8em 0 1em; text-align:center;
+    page-break-inside:avoid; break-inside:avoid;
+  }
+  figure.fig img{ max-width:100%; max-height:185mm; }
+  figure.fig figcaption{
+    font-family:"SimHei","黑体","Microsoft YaHei",sans-serif;
+    font-size:9pt; color:#555; margin-top:.45em;
+  }
+
+  /* ---------- 封面 ---------- */
+  .cover{ height:247mm; position:relative; page-break-after:always; break-after:page; }
+  .cover .band{ height:6px; background:var(--hline); margin:0 0 26mm; }
+  .cover .org{ font-family:"SimHei","黑体",sans-serif; font-size:12pt;
+               text-align:center; letter-spacing:.35em; color:#333; margin-bottom:6mm;}
+  .cover h1{ font-size:26pt; letter-spacing:.06em; margin:0 0 4mm; }
+  .cover .sub{ text-align:center; font-size:12pt; color:#555; letter-spacing:.2em;
+               margin-bottom:16mm; font-family:"SimHei","黑体",sans-serif; }
+  .cover .meta{ width:78%; margin:0 auto; }
+  .cover .meta table{ font-size:10.5pt; }
+  .cover .meta th{ background:none; border:0; font-family:"SimHei","黑体",sans-serif;
+                   width:34%; text-align:left; padding:5px 8px 5px 0; color:#333;}
+  .cover .meta td{ border:0; border-bottom:1px solid #cfcdc9; padding:5px 4px; }
+  .cover .foot{ position:absolute; bottom:6mm; width:100%; text-align:center;
+                font-size:9.5pt; color:#777; letter-spacing:.1em;}
+  .body{ page-break-before:auto; }
+</style></head>
+<body>
+  <section class="cover">
+    <div class="band"></div>
+    <div class="org">软件新技术专题 · 课程大作业</div>
+    <h1>测试计划与用例文档</h1>
+    <div class="sub">高校实验室资产与报修管理平台</div>
+    <div class="meta"><table><tr><th>项目名称</th><td>高校实验室资产与报修管理平台</td></tr><tr><th>团队编号</th><td>第 6 组</td></tr><tr><th>团队成员</th><td>王旻辉、巴力江·托力肯别克、廖煌、迪丽热巴·阿布都西克尔</td></tr><tr><th>班级 / 学号</th><td>软件工程 2023-2 ／ 2311231056</td></tr><tr><th>二级学院 / 专业</th><td><code><span class="blank">____</span></code> ／ <code><span class="blank">____</span></code></td></tr><tr><th>授课教师</th><td>谭清萱</td></tr><tr><th>版本号</th><td>V1.0</td></tr><tr><th>日期</th><td><code><span class="blank">____</span></code></td></tr><tr><th>编写人 / 审核人</th><td><code><span class="blank">____</span></code> ／ <code><span class="blank">____</span></code></td></tr></table></div>
+    <div class="foot">第 6 组　·　软件工程 2023-2</div>
+  </section>
+  <section class="body">
+<blockquote><p>本文件是<strong>源稿</strong>（Markdown）。定稿流程：AI 出初稿 → 人工改写表述（防查重）→ 补封面信息 → 导出 PDF（须嵌入字体）。</p><p>导出前请把正文中的 <code><span class="blank">____</span></code> 与「待人工改写」标记全部清掉。</p></blockquote>
+<p><strong>修订历史</strong></p>
+<table><thead><tr><th>版本</th><th>日期</th><th>修订内容</th><th>修订人</th></tr></thead><tbody><tr><td>V0.1</td><td><code><span class="blank">____</span></code></td><td>初稿完成（AI 辅助生成，全部数字取自测试构建日志）</td><td><code><span class="blank">____</span></code></td></tr><tr><td>V1.0</td><td><code><span class="blank">____</span></code></td><td>人工改写表述、补齐封面信息、定稿</td><td><code><span class="blank">____</span></code></td></tr></tbody></table>
+<hr/>
+<h2>编写说明与 AI 使用声明</h2>
+<p>本文档允许使用 AI 工具，但内容的准确性由本组负责。各章的生成方式如实声明如下：</p>
+<table><thead><tr><th>章节</th><th>生成方式</th><th>说明</th></tr></thead><tbody><tr><td>1 引言～2 测试策略</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>策略与比例为本组实际执行的口径</td></tr><tr><td>3 环境与运行方式</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>命令为真实执行的命令，三前提为实测结论</td></tr><tr><td>4 单元测试～6 等价类与边界值</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>用例清单逐条对应 <code>src/test</code> 真实类与方法</td></tr><tr><td>7 追溯矩阵～8 测试结果</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>数字全部来自 Maven 构建日志，可逐条复核</td></tr><tr><td>9 限制与如实说明</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>覆盖率等不利事实<strong>照实列出，未作粉饰</strong></td></tr></tbody></table>
+<blockquote><p><strong>防查重提示（提交前请删除本条）</strong>：本稿依据 <code>AI留痕/测试素材交付.md</code>、T1/T2/T2b 留痕与构建日志组织，</p><p>与内部文件存在同源表述风险。定稿前必须人工通读重写并查重。</p></blockquote>
+<hr/>
+<h2>1 引言</h2>
+<h3>1.1 编写目的</h3>
+<p>本文档给出「高校实验室资产与报修管理平台」的测试策略、测试环境、用例设计方法、用例与业务规则的对应关系，以及最终测试结果。所有数字均来自真实执行的 Maven 构建日志（<code>Tests run</code> 汇总与逐类耗时），不存在估算值。</p>
+<h3>1.2 测试范围</h3>
+<p>覆盖自定义业务包 <code>com.ruoyi.project.laboratory</code> 的四个模块：实验室房间、资产台账、故障报修（含状态机与履历）、数据看板。若依框架原生模块（系统管理、监控等）不在本项目测试范围内。</p>
+<h3>1.3 通过标准</h3>
+<p>全量用例 100% 通过（Failures = 0、Errors = 0、Skipped = 0）；每条业务规则 BR-01~BR-06 至少被一个用例的断言命中，且断言对象可指回规则编号。</p>
+<h2>2 测试策略与测试金字塔</h2>
+<h3>2.1 比例与理由</h3>
+<table><thead><tr><th>层</th><th class="ta-center">用例数</th><th class="ta-center">占比</th><th>为什么这么分</th></tr></thead><tbody><tr><td>单元测试</td><td class="ta-center">33</td><td class="ta-center">67%</td><td>报修状态机、权限判定、字段校验三块<strong>规则密集、分支多</strong>，需要毫秒级快速反馈；用 Mockito 隔离依赖，专攻「调用契约」</td></tr><tr><td>集成测试</td><td class="ta-center">16</td><td class="ta-center">33%</td><td>本系统一次写操作常常<strong>同时落 2~3 张表</strong>（报修单 + 资产状态 + 履历），事务一致性是单测用 Mock 验证不了的；集成测试用真实 SQL 验证「落库结果」</td></tr><tr><td>端到端</td><td class="ta-center">2 条主流程</td><td class="ta-center">手工执行</td><td>只保留「提交报修→审核→完成」「资产台账增删改查」两条演示主流程，由人工在真实环境按步骤执行</td></tr></tbody></table>
+<blockquote><p><strong>关于端到端占比低</strong>：本项目<strong>没有引入 Selenium / Playwright</strong>，原因有二：一是离线开发环境无法安装浏览器驱动，二是系统体量（4 个业务模块）不足以摊薄 E2E 框架的维护成本。端到端场景由人工按演示路径实测替代（登录、看板、台账、报修闭环四条路径共 73 条接口请求，0 个 4xx/5xx）。这是有意的设计取舍，不是遗漏。</p></blockquote>
+<h3>2.2 单元与集成的分工边界</h3>
+<table><thead><tr><th>维度</th><th>单元测试</th><th>集成测试</th></tr></thead><tbody><tr><td>验证方式</td><td>Mockito 隔离依赖，验证方法被调几次、参数对不对</td><td>Spring 上下文 + 真实数据库（H2 内存库），<code>JdbcTemplate</code> 直查表验证落库结果</td></tr><tr><td>能发现</td><td>分支遗漏、边界值错误、异常消息错误、调用顺序错误</td><td>多表事务不一致、Mapper XML 与表结构不匹配、SQL 方言问题、行级权限过滤失效</td></tr><tr><td>发现不了</td><td>SQL 是否真的执行成功</td><td>单个方法的边界组合（集成测试慢，不适合穷举）</td></tr><tr><td>中间件依赖</td><td>无</td><td><strong>无</strong>（H2 内存库，本地跑测试不需要 MySQL / Redis / Docker）</td></tr></tbody></table>
+<h2>3 测试环境与运行方式</h2>
+<h3>3.1 运行命令</h3>
+<pre><code># 本机首选（Maven 启动脚本损坏时走包装脚本）
+powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy/tools/mvnx.ps1 -o -B clean test
+
+# Git Bash 环境等价命令
+bash .workbuddy/tools/mvnx.sh -o -B clean test
+
+# 只跑集成测试（调试用）
+powershell ... mvnx.ps1 -o -B -Dtest='*IntegrationTest' test</code></pre>
+<h3>3.2 环境三前提（缺一条无法复现）</h3>
+<table><thead><tr><th class="ta-center">#</th><th>前提</th><th>原因</th></tr></thead><tbody><tr><td class="ta-center">1</td><td>必须离线 <code>-o</code></td><td>Maven 本地仓库已预热完毕，离线模式保证构建可重复</td></tr><tr><td class="ta-center">2</td><td>H2 版本<strong>必须锁 <code>1.4.199</code></strong></td><td>Spring Boot 2.5.15 依赖管理指向 1.4.200，本机离线仓库没有该版本；不锁版本会报 <code>Could not resolve dependencies</code>，极易误判为网络问题。已在 <code>pom.xml</code> 以 <code>test</code> scope 锁定</td></tr><tr><td class="ta-center">3</td><td><strong>不需要</strong> Docker / Testcontainers / 嵌入式 Redis</td><td>本机离线仓库没有这些组件；集成测试全部跑 H2 内存库</td></tr></tbody></table>
+<h3>3.3 两个踩坑记录</h3>
+<ul><li><strong>验收一律用 <code>clean test</code></strong>：不带 <code>clean</code> 时 <code>target/test-classes</code> 会残留上一次编译的类，导致 <code>mvn test</code> 与 <code>clean test</code> 结果不一致——项目在对照实验中因此失效过一轮。</li><li><strong>集成测试不加 <code>@Transactional</code></strong>：测试类用 <code>@BeforeEach</code> 清表 + 铺基线数据，保证用例间互不污染，同时避免事务回滚掩盖「落库是否真实发生」这一被测对象本身。</li></ul>
+<h2>4 单元测试设计（33 个）</h2>
+<h3>4.1 用例分布</h3>
+<table><thead><tr><th>测试类</th><th class="ta-center">用例数</th><th>被测对象</th><th>考察点</th></tr></thead><tbody><tr><td><code>LabRepairServiceImplTest</code></td><td class="ta-center">12</td><td>报修服务</td><td>状态机合法/非法流转全枚举、字段校验、资产联动、评分边界</td></tr><tr><td><code>LabAssetServiceImplTest</code></td><td class="ta-center">8</td><td>资产服务</td><td>唯一性校验、删除保护、批量导入的成败计数</td></tr><tr><td><code>LabRepairStatusMachinePublicEntryTest</code></td><td class="ta-center">3</td><td>报修公开入口</td><td>状态机经 <code>updateLabRepair</code> 真实入口的分支与持久化编排</td></tr><tr><td><code>LabRoomServiceImplTest</code></td><td class="ta-center">5</td><td>房间服务</td><td>房间删除保护、编号与名称必填、编号占用</td></tr><tr><td><code>LabRoleUtilsTest</code></td><td class="ta-center">5</td><td>权限判定</td><td>六类角色的处理权/全局可见权矩阵、无登录上下文兜底</td></tr></tbody></table>
+<h3>4.2 状态机的两层覆盖</h3>
+<p>状态机是全系统风险最高的规则（写错会静默放行非法操作），因此覆盖分两层：</p>
+<ul><li><strong>契约层</strong>（保留的 5 个反射用例）：直接验证 4 条合法流转 + 16 组非法流转 + 幂等（同状态放行）矩阵。缺点是跨过了公开入口。</li><li><strong>入口层</strong>（新增 3 个用例）：经 <code>updateLabRepair</code> 公开入口触发，补上契约层测不到的三件事——合法流转时持久层<strong>真的收到正确参数</strong>、非法流转时<strong>整轮零写库</strong>（<code>verify(..., never())</code>）、状态不变时履历记的是「维修信息更新」而非状态流转。</li></ul>
+<p>两层并存是有意决策：契约层穷举矩阵、入口层验证编排，互不弱化。</p>
+<h2>5 集成测试设计（16 个）</h2>
+<h3>5.1 用例分布</h3>
+<table><thead><tr><th>测试类</th><th class="ta-center">用例数</th><th>覆盖</th></tr></thead><tbody><tr><td><code>LabRepairIntegrationTest</code></td><td class="ta-center">7</td><td>报修全流程落库、非法流转三处不变、行级权限、逻辑删除、终态不可回退/复活</td></tr><tr><td><code>LabDashboardIntegrationTest</code></td><td class="ta-center">7</td><td>看板 8 条 mapper 查询全部覆盖（4 项指标 + 4 张图表），含 7 天窗口边界</td></tr><tr><td><code>LabAssetIntegrationTest</code></td><td class="ta-center">2</td><td>跨模块协作（资产↔房间）、批量导入事务与履历</td></tr></tbody></table>
+<h3>5.2 看板方言垫片（不改生产代码补齐 H2 方言）</h3>
+<p>看板 SQL 使用 MySQL 专有的 <code>date_format()</code> / <code>date_sub()</code>，H2 不支持。本项目的解法：在<strong>测试侧</strong>用 H2 的 <code>create alias ... for "类.静态方法"</code> 注册两个<strong>同名等效函数</strong>，生产 mapper XML <strong>一个字都没改</strong>就在 H2 上跑通了全部 8 条查询。垫片放在 <code>src/test</code>，不参与生产打包。</p>
+<p>一个实现细节值得记录：<code>date_sub</code> 的第二个参数<strong>必须声明成 <code>String</code></strong>——H2 会把 <code>interval 6 day</code> 变成 <code>INTERVAL '6' DAY</code> 传进来；声明成 <code>int</code> 报数据转换错误，声明成 <code>Object</code> 报十六进制解析错误。垫片自检用例（DB-01）验证的是<strong>函数真的算得出正确值</strong>，而不是只验证注册记录存在。</p>
+<h3>5.3 基础设施自检与数据铺底</h3>
+<p>每个集成测试类自带 <code>@BeforeEach</code> 基线（房间/资产/报修数据），不依赖执行顺序；DB-01 作为基础设施自检用例单独存在，方言垫片失效时第一个红的就是它，便于定位。</p>
+<h2>6 黑盒用例设计方法：等价类与边界值</h2>
+<h3>6.1 等价类划分（有效/无效各一组）</h3>
+<table><thead><tr><th>类型</th><th>实例</th><th>落在哪个用例</th></tr></thead><tbody><tr><td>有效等价类</td><td>资产状态=正常（可报修）；报修状态=待审核（可删）；房间下资产数=0（可删房间）；已完成工单（可评价）</td><td>IT-01、IT-04、IT-05、<code>LabRepairServiceImplTest</code></td></tr><tr><td>无效等价类</td><td>待审核直接跳已完成；房间下有资产时删房间；资产编号已被占用；待审核单直接评价</td><td>IT-03、IT-05、IT-07、<code>LabRepairServiceImplTest</code></td></tr></tbody></table>
+<h3>6.2 边界值选取（七组）</h3>
+<table><thead><tr><th>边界对象</th><th>取值</th><th>用例</th></tr></thead><tbody><tr><td>评分区间 [1,5]</td><td><strong>0 / 1 / 5 / 6</strong>（1、5 为边界内，0、6 为边界外）</td><td><code>LabRepairServiceImplTest</code></td></tr><tr><td>必填字符串</td><td>空串与 <code>null</code> 分开各测</td><td><code>LabRepairServiceImplTest</code></td></tr><tr><td>批量导入条数</td><td>0 条（空清单）与 3 条含 1 条失败，配成一对</td><td><code>LabAssetServiceImplTest</code>、IT-07</td></tr><tr><td>近 7 天窗口</td><td>第 6 天计入、第 7 天剔除</td><td>DB-04、DB-07</td></tr><tr><td>排行榜上限</td><td><code>limit 8</code> 满载与未分配实验室兜底</td><td>DB-06</td></tr><tr><td>权限身份</td><td>本人 / 另一普通用户 / 处理角色 / 无登录上下文</td><td>IT-06、<code>LabRoleUtilsTest</code></td></tr><tr><td>状态机终态</td><td>3→2（不可回退）、4→0（不可复活）、0→3（跨级跳转）</td><td>IT-03、IT-09、IT-10</td></tr></tbody></table>
+<h2>7 用例 ↔ 业务规则追溯矩阵</h2>
+<p>编号口径取自需求基线的 BR-01~BR-06。一个用例可命中多条规则（如全流程用例 IT-02 同时命中 BR-01/02/04），<strong>故各行合计 58 大于用例总数 49</strong>。</p>
+<table><thead><tr><th>规则</th><th class="ta-center">用例数</th><th>代表性断言点</th></tr></thead><tbody><tr><td>BR-01 报修状态机</td><td class="ta-center">12</td><td>4 合法+16 非法全枚举；公开入口版本；全流程每步落库；终态不可回退/复活</td></tr><tr><td>BR-02 资产状态联动</td><td class="ta-center">5</td><td>提交→资产变维修中；完成→回归正常；删除待审核单→回滚；拒绝单不占资产</td></tr><tr><td>BR-03 权限规则</td><td class="ta-center">8</td><td>六角色矩阵；行级过滤真实生效（同一数据两种身份见不同范围）；看板口径按角色收紧</td></tr><tr><td>BR-04 事务边界</td><td class="ta-center">6</td><td>批量导入逐条独立提交；非法流转<strong>零写库</strong>；报修单+资产+履历三表同写；失败整体不变</td></tr><tr><td>BR-05 字段校验</td><td class="ta-center">20</td><td>报修 6 项 + 资产 8 项 + 房间 5 项 + 集成侧撞号汇总（矩阵中最大的一块）</td></tr><tr><td>BR-06 逻辑删除</td><td class="ta-center">2</td><td>删除后物理行仍在、<code>del_flag='2'</code>；清空资产后房间可删</td></tr><tr><td>US-13 运维看板（用户故事）</td><td class="ta-center">4</td><td>7 天窗口边界、等级分布、排行 limit、成本趋势窗口</td></tr><tr><td>基础设施自检</td><td class="ta-center">1</td><td>方言垫片真的算得出正确值</td></tr></tbody></table>
+<blockquote><p>断言总数 <strong>177</strong> 条（<code>assertEquals</code> / <code>assertThrows</code> / <code>assertTrue</code> / <code>assertNotNull</code> / <code>assertDoesNotThrow</code>），Mockito 交互校验 <strong>27</strong> 次 <code>verify</code>——后者专门用来断言「拒绝时<strong>确实没有</strong>写库」这类<strong>否定式契约</strong>，是 <code>assertThrows</code> 覆盖不到的。</p></blockquote>
+<h2>8 测试结果与证据</h2>
+<h3>8.1 汇总数字（全部来自真实构建日志）</h3>
+<table><thead><tr><th>指标</th><th class="ta-center">任务书要求</th><th>实际值</th></tr></thead><tbody><tr><td>单元测试数</td><td class="ta-center">≥10</td><td><strong>33</strong></td></tr><tr><td>集成测试数</td><td class="ta-center">≥5</td><td><strong>16</strong></td></tr><tr><td>合计通过</td><td class="ta-center">—</td><td><strong>49 / 49 = 100%</strong>（Failures 0 / Errors 0 / Skipped 0）</td></tr><tr><td>单次全量耗时</td><td class="ta-center">—</td><td><strong>1 分 38 秒</strong></td></tr><tr><td>断言总数</td><td class="ta-center">—</td><td><strong>177</strong></td></tr><tr><td>Mockito 交互校验</td><td class="ta-center">—</td><td><strong>27</strong></td></tr><tr><td>集成测试中间件</td><td class="ta-center">—</td><td><strong>0 个</strong>（H2 内存库）</td></tr><tr><td>业务规则覆盖</td><td class="ta-center">—</td><td><strong>BR-01~06 全部命中</strong>（58 条映射）</td></tr></tbody></table>
+<h3>8.2 逐类结果</h3>
+<table><thead><tr><th>测试类</th><th class="ta-center">类型</th><th class="ta-center">用例</th><th>耗时</th></tr></thead><tbody><tr><td><code>LabAssetIntegrationTest</code></td><td class="ta-center">集成</td><td class="ta-center">2</td><td>8.101 s</td></tr><tr><td><code>LabDashboardIntegrationTest</code></td><td class="ta-center">集成</td><td class="ta-center">7</td><td>0.194 s</td></tr><tr><td><code>LabRepairIntegrationTest</code></td><td class="ta-center">集成</td><td class="ta-center">7</td><td>0.313 s</td></tr><tr><td><code>LabAssetServiceImplTest</code></td><td class="ta-center">单元</td><td class="ta-center">8</td><td>0.228 s</td></tr><tr><td><code>LabRepairServiceImplTest</code></td><td class="ta-center">单元</td><td class="ta-center">12</td><td>0.043 s</td></tr><tr><td><code>LabRepairStatusMachinePublicEntryTest</code></td><td class="ta-center">单元</td><td class="ta-center">3</td><td>0.002 s</td></tr><tr><td><code>LabRoomServiceImplTest</code></td><td class="ta-center">单元</td><td class="ta-center">5</td><td>0 s</td></tr><tr><td><code>LabRoleUtilsTest</code></td><td class="ta-center">单元</td><td class="ta-center">5</td><td>0 s</td></tr></tbody></table>
+<h3>8.3 测试运行证据（逐字摘录自构建日志）</h3>
+<p><strong>证据一 · 汇总行</strong>：</p>
+<pre><code>Tests run: 49, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS</code></pre>
+<p><strong>证据二 · 看板 SQL 在 H2 上真实执行（生产 mapper XML 原文，一字未改）</strong>：</p>
+<pre><code>==&gt;  Preparing: select date_format(create_time, '%m-%d') as name, count(1) as value
+     from lab_repair where del_flag = '0'
+       and create_time &gt;= date_sub(curdate(), interval 6 day)
+     group by date_format(create_time, '%m-%d') order by min(create_time)
+&lt;==      Total: 3</code></pre>
+<p><code>Total: 3</code> 正是期望的「今天 / 3 天前 / 6 天前」三个分组——窗口外的第 7 天那条被正确剔除，窗口边界行为与断言一致。</p>
+<p><code>[待填：此处插入测试运行截图 1 —— 用浏览器打开 AI留痕/截图/T2b-测试运行结果-逐字摘录.html 截取，存为 PNG 后替换本占位]</code></p>
+<p><code>[待填：此处插入测试运行截图 2 —— 需求同上，建议截取含 Tests run 汇总行与 BUILD SUCCESS 的段落]</code></p>
+<blockquote><p>逐字摘录的原始凭据：<code>AI留痕/截图/T2b-Tests-run-汇总行.txt</code> 与完整构建日志。截图须人工从上述文件截取生成，<strong>不得以文本文件代替截图提交</strong>。</p></blockquote>
+<h2>9 限制与如实说明</h2>
+<p>以下四条是本测试工作的已知边界，<strong>均照实说明、未作美化</strong>：</p>
+<p>1. <strong>行覆盖率 / 分支覆盖率百分比未能产出。</strong> 本项目全程离线构建，本地 Maven 仓库缺 <code>jacoco-maven-plugin</code> 与 <code>org.jacoco.core</code>，仅有运行时 agent jar，无法生成覆盖率报告；引入 JaCoCo 还需修改 <code>pom.xml</code> 构建段，超出测试工作的改动边界。因此本文以<strong>用例↔业务规则追溯矩阵（第 7 章）作为需求维度的覆盖证据</strong>，辅以断言数 177 与交互校验 27 两个可机械复核的统计量，<strong>不给出未经实测的覆盖率百分比</strong>。 2. <strong>构建日志含一段无害噪声。</strong> Surefire 2.22.2 的 <code>PpidChecker</code> 会调用 Windows WMIC 查询父进程存活状态，本机安全策略拦截了 WMIC，Surefire 随即自行降级为 NOOP events 并留下一段 <code>IllegalStateException: Cannot use PPID ...</code> 堆栈与一个 <code>jvmRun1.dump</code> 文件。<strong>该噪声不影响测试</strong>：本轮 49/49 通过、BUILD SUCCESS。在此说明是为了避免读者把这段堆栈误读为构建故障。 3. <strong>事务回滚为间接覆盖。</strong> 「注入异常后断言双表回滚」的直接验证未做：本机离线仓库中 MyBatis Mapper 是 JDK 动态代理，<code>@SpyBean</code> 对其生效性存疑，硬造一个假回滚断言不如如实说明。事务完整性目前由 IT-03「非法流转后单据、履历、资产<strong>三处均不变</strong>」间接覆盖。 4. <strong>测试聚焦 Service 与 Mapper 两层。</strong> 29 个生产类中被测试直接触达的核心类 11 个；Controller 层的权限注解通过真实环境端到端实测验证（四条演示路径 73 条接口 0 个 4xx/5xx），Entity 与纯常量/图形工具类不单独编写用例。</p>
+  </section>
+</body></html>
