@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/>
+<title>需求规格说明书</title>
+<style>
+  /* ---------- 字体与基础 ---------- */
+  :root{
+    --ink:#1a1a1a; --ink2:#444; --line:#b9b9b9; --hline:#5b3f2f;
+    --soft:#8a8a8a; --bg-soft:#f5f4f2;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"SimSun","宋体","Songti SC",serif;
+    font-size:10pt; line-height:1.5; color:var(--ink);
+    text-align:justify; text-justify:inter-ideograph;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  h1,h2,h3,h4,h5,h6{
+    font-family:"SimHei","黑体","Microsoft YaHei","微软雅黑",sans-serif;
+    color:#111; line-height:1.3; margin:0 0 .42em;
+    page-break-after:avoid; break-after:avoid;
+  }
+  h1{ font-size:17pt; text-align:center; margin:0 0 .9em; }
+  h2{ font-size:13pt; border-left:5px solid var(--hline); padding-left:.5em;
+      margin-top:1.15em; }
+  h3{ font-size:11pt; margin-top:.95em; }
+  h4{ font-size:10pt; margin-top:.8em; color:#222; }
+  p{ margin:0 0 .5em; }
+  strong{ font-family:"SimHei","黑体","Microsoft YaHei",sans-serif; font-weight:normal; }
+  code{
+    font-family:"Consolas","Courier New",monospace; font-size:9pt;
+    background:var(--bg-soft); border:1px solid #e2e0dd; border-radius:2px;
+    padding:0 2px;
+  }
+  pre{
+    background:#faf9f7; border:1px solid #e0dedb; border-left:3px solid var(--hline);
+    padding:.6em .8em; margin:.6em 0; page-break-inside:avoid; break-inside:avoid;
+    white-space:pre-wrap; word-break:break-all;
+  }
+  pre code{ background:none; border:0; padding:0; font-size:8.1pt; line-height:1.38; }
+  blockquote{
+    margin:.5em 0; padding:.45em .75em; background:#fbfaf8;
+    border-left:3px solid #c9c3bb; color:var(--ink2); font-size:9.5pt;
+  }
+  blockquote p:last-child{ margin-bottom:0; }
+  hr{ border:0; border-top:1px solid #ddd; margin:.9em 0; }
+  ul{ margin:.35em 0 .6em; padding-left:1.5em; }
+  li{ margin:.12em 0; }
+  .blank{ color:#999; letter-spacing:1px; }
+
+  /* ---------- 表格 ---------- */
+  table{
+    width:100%; border-collapse:collapse; margin:.5em 0 .75em;
+    font-size:8.4pt; page-break-inside:auto;
+  }
+  thead{ display:table-header-group; }
+  tr{ page-break-inside:avoid; break-inside:avoid; }
+  th,td{
+    border:1px solid var(--line); padding:2.5px 5px;
+    vertical-align:top; text-align:left; word-break:break-word;
+    line-height:1.42;
+  }
+  th{
+    font-family:"SimHei","黑体","Microsoft YaHei",sans-serif; font-weight:normal;
+    background:#eceae6; text-align:center;
+  }
+  td.ta-center,th.ta-center{ text-align:center; }
+  td.ta-right,th.ta-right{ text-align:right; }
+
+  /* ---------- 图 ---------- */
+  figure.fig{
+    margin:.8em 0 1em; text-align:center;
+    page-break-inside:avoid; break-inside:avoid;
+  }
+  figure.fig img{ max-width:100%; max-height:185mm; }
+  figure.fig figcaption{
+    font-family:"SimHei","黑体","Microsoft YaHei",sans-serif;
+    font-size:9pt; color:#555; margin-top:.45em;
+  }
+
+  /* ---------- 封面 ---------- */
+  .cover{ height:247mm; position:relative; page-break-after:always; break-after:page; }
+  .cover .band{ height:6px; background:var(--hline); margin:0 0 26mm; }
+  .cover .org{ font-family:"SimHei","黑体",sans-serif; font-size:12pt;
+               text-align:center; letter-spacing:.35em; color:#333; margin-bottom:6mm;}
+  .cover h1{ font-size:26pt; letter-spacing:.06em; margin:0 0 4mm; }
+  .cover .sub{ text-align:center; font-size:12pt; color:#555; letter-spacing:.2em;
+               margin-bottom:16mm; font-family:"SimHei","黑体",sans-serif; }
+  .cover .meta{ width:78%; margin:0 auto; }
+  .cover .meta table{ font-size:10.5pt; }
+  .cover .meta th{ background:none; border:0; font-family:"SimHei","黑体",sans-serif;
+                   width:34%; text-align:left; padding:5px 8px 5px 0; color:#333;}
+  .cover .meta td{ border:0; border-bottom:1px solid #cfcdc9; padding:5px 4px; }
+  .cover .foot{ position:absolute; bottom:6mm; width:100%; text-align:center;
+                font-size:9.5pt; color:#777; letter-spacing:.1em;}
+  .body{ page-break-before:auto; }
+</style></head>
+<body>
+  <section class="cover">
+    <div class="band"></div>
+    <div class="org">软件新技术专题 · 课程大作业</div>
+    <h1>需求规格说明书</h1>
+    <div class="sub">高校实验室资产与报修管理平台</div>
+    <div class="meta"><table><tr><th>项目名称</th><td>高校实验室资产与报修管理平台</td></tr><tr><th>团队编号</th><td>第 6 组</td></tr><tr><th>团队成员</th><td>王旻辉、巴力江·托力肯别克、廖煌、迪丽热巴·阿布都西克尔</td></tr><tr><th>班级 / 学号</th><td>软件工程 2023-2 ／ 2311231056</td></tr><tr><th>二级学院 / 专业</th><td><code><span class="blank">____</span></code> ／ <code><span class="blank">____</span></code></td></tr><tr><th>授课教师</th><td>谭清萱</td></tr><tr><th>版本号</th><td>V1.0</td></tr><tr><th>日期</th><td><code><span class="blank">____</span></code></td></tr><tr><th>编写人 / 审核人</th><td><code><span class="blank">____</span></code> ／ <code><span class="blank">____</span></code></td></tr></table></div>
+    <div class="foot">第 6 组　·　软件工程 2023-2</div>
+  </section>
+  <section class="body">
+<blockquote><p>本文件是<strong>源稿</strong>（Markdown）。定稿流程：AI 出初稿 → 人工改写表述（防查重）→ 补封面信息 → 导出 PDF（须嵌入字体）。</p><p>导出前请把正文中的 <code><span class="blank">____</span></code> 与「待人工改写」标记全部清掉。</p></blockquote>
+<p><strong>修订历史</strong></p>
+<table><thead><tr><th>版本</th><th>日期</th><th>修订内容</th><th>修订人</th></tr></thead><tbody><tr><td>V0.1</td><td><code><span class="blank">____</span></code></td><td>初稿完成（AI 辅助生成，事实取自项目仓库与需求基线）</td><td><code><span class="blank">____</span></code></td></tr><tr><td>V1.0</td><td><code><span class="blank">____</span></code></td><td>人工改写表述、补齐封面信息、定稿</td><td><code><span class="blank">____</span></code></td></tr></tbody></table>
+<hr/>
+<h2>编写说明与 AI 使用声明</h2>
+<p>本文档允许使用 AI 工具，但内容的准确性由本组负责。各章的生成方式如实声明如下：</p>
+<table><thead><tr><th>章节</th><th>生成方式</th><th>说明</th></tr></thead><tbody><tr><td>1 引言</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>背景与痛点由项目事实转写，术语表由模板要求补全</td></tr><tr><td>2 产品愿景板</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>五维内容取自项目定位与用户调研结论</td></tr><tr><td>3 用户角色分析</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>角色按系统实际的 7 个权限角色归并为 5 类使用动机</td></tr><tr><td>4 用户故事与验收标准</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>14 个故事的<strong>需求意图</strong>与代码实现一一对应（见附录 A）</td></tr><tr><td>5 非功能需求</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>凡未经实测的指标均标注为「设计目标」或「未验证」，不作成绩陈述</td></tr><tr><td>6 需求评审（INVEST）</td><td>AI 生成初稿 → <strong>待人工改写</strong></td><td>已知短板照实列出，未粉饰</td></tr></tbody></table>
+<blockquote><p><strong>防查重提示（提交前请删除本条）</strong>：本稿由 AI 依据 <code>docs/大作业/01-需求基线.md</code>、<code>AGENTS.md</code> 与代码事实组织，</p><p>与这些内部文件<strong>存在同源表述风险</strong>。定稿前必须由人工通读一遍、用自己的话重写，并做一次查重。</p></blockquote>
+<hr/>
+<h2>1 引言</h2>
+<h3>1.1 编写目的</h3>
+<p>本文档描述「高校实验室资产与报修管理平台」的软件需求，是后续架构设计、编码实现、测试用例编写与结课验收的共同依据。 预期读者包括本组成员、授课教师与验收人员。文档中的每一条用户故事都对应系统中已实现的接口与页面，不留"纸上功能"。</p>
+<h3>1.2 项目背景</h3>
+<p>高校二级学院的实验室日常有两套并行的管理动作：一是<strong>资产台账</strong>，二是<strong>设备报修</strong>。当前两者的落地方式都存在明显缺口：</p>
+<table><thead><tr><th>现状做法</th><th>由此产生的问题</th></tr></thead><tbody><tr><td>台账用 Excel 手工维护，分散在若干个人电脑里</td><td>设备的调拨、报废没有留痕，学期末盘点时账实不符，且查不出是哪一个环节出的错</td></tr><tr><td>报修靠微信群喊人</td><td>报修人不知道单子走到了哪一步，维修方也不清楚当天有哪些活；催办只能靠反复询问</td></tr><tr><td>维修费用记在个人记录上</td><td>一学期修了多少次、哪台设备最常坏、花了多少钱，都拿不出统计口径</td></tr></tbody></table>
+<p>因此本项目把"台账、工单、统计"三件事收进同一个系统：让每一次资产变动都留下可追责的履历， 让每一张报修单都有明确的状态与责任人，让每一个学期都有可直接交付的运维数据。</p>
+<h3>1.3 术语与缩写</h3>
+<table><thead><tr><th>术语</th><th>说明</th></tr></thead><tbody><tr><td>资产台账</td><td>记录全部实验设备的编号、名称、类型、价格、归属实验室与状态的清单</td></tr><tr><td>报修单</td><td>一次设备故障上报及其处理过程的数据载体</td></tr><tr><td>履历 / 时间线</td><td>资产或报修单的状态变动流水，含操作人、操作时间与备注</td></tr><tr><td>逻辑删除</td><td>删除时只把删除标记置为已删除，数据库记录保留，列表默认不再显示</td></tr><tr><td>AC</td><td>Acceptance Criteria，验收标准</td></tr><tr><td>GWT</td><td>Given-When-Then，验收标准的书写格式</td></tr><tr><td>INVEST</td><td>用户故事的六条质量准则：Independent / Negotiable / Valuable / Estimable / Small / Testable</td></tr><tr><td>BR</td><td>Business Rule，业务规则；本项目共 6 条，是测试用例的判定依据</td></tr></tbody></table>
+<hr/>
+<h2>2 产品愿景板</h2>
+<table><thead><tr><th>维度</th><th>内容</th></tr></thead><tbody><tr><td><strong>愿景陈述</strong></td><td>让每一台实验设备都有人管、有账查、有维修记录可回溯——学院实验室的资产与故障处理，不再依赖个人记忆和 Excel</td></tr><tr><td><strong>目标群体</strong></td><td>学院实验室中心的在岗教师（总责）、各实验室的房间管理员、兼职的学生助管、设备处或学院派驻的维修人员、负责固定资产卡片的行政人员、以及需要查看运维情况的学院督导</td></tr><tr><td><strong>核心需求（用户痛点）</strong></td><td>① 台账变动无痕、期末对不上账；② 报修进度不透明、催办靠人；③ 维修费用与故障分布没有统计口径；④ 新购设备入库录入量太大；⑤ 不同岗位看到的数据范围应当不同</td></tr><tr><td><strong>产品（核心功能）</strong></td><td>实验室房间维护 · 资产台账（含 Excel 批量导入导出、二维码标签、全生命周期履历）· 设备报修闭环（提交 → 审核 → 维修 → 完成 → 评价，含故障照片与维修成本）· 运维工作台（4 项指标 + 4 张分析图）· 基于角色的菜单权限与数据行级过滤</td></tr><tr><td><strong>商业价值</strong></td><td>把实验室资产与运维从"个人表格"升级为"有履历、有责任人、可统计"的组织资产：盘点时间由半天量级压缩到分钟量级，故障处理的每一步可被追踪，学期末可直接产出运维数据用于预算与考核</td></tr></tbody></table>
+<hr/>
+<h2>3 用户角色分析</h2>
+<p>系统在权限层面共设有 7 个角色。按<strong>使用动机</strong>归并后，可得到下面 5 类使用者。 每类使用者看到的数据范围不同：只有"可查看全部数据"的角色能看到全量工单与看板，其余角色被强制过滤为本人数据。</p>
+<h3>3.1 报修申请人</h3>
+<table><thead><tr><th>项目</th><th>描述</th></tr></thead><tbody><tr><td>对应权限角色</td><td>学生助管、房间管理员</td></tr><tr><td>角色描述</td><td>实验室的日常使用者与兼职管理的学生，负责所在房间设备的日常巡视与报修</td></tr><tr><td>核心目标</td><td>设备坏了能在一分钟内报上去，并且随时知道处理到哪一步</td></tr><tr><td>痛点</td><td>设备编号靠手抄容易错；报上去之后不知道进度、只能反复追问；维修质量好坏没有人记录</td></tr><tr><td>数据可见范围</td><td>仅本人提交的报修单</td></tr></tbody></table>
+<h3>3.2 维修执行方</h3>
+<table><thead><tr><th>项目</th><th>描述</th></tr></thead><tbody><tr><td>对应权限角色</td><td>维修工程师、维修教师</td></tr><tr><td>角色描述</td><td>学校设备处或学院派驻的维修人员，同时承担带教任务</td></tr><tr><td>核心目标</td><td>一次看全所有待办工单并按故障等级排优先级；修完把实际成本如实登记</td></tr><tr><td>痛点</td><td>工单靠群消息派发容易漏；看不出哪台设备是反复修的；费用记在本子上，期末汇总不出来</td></tr><tr><td>数据可见范围</td><td>全部报修单、全部资产</td></tr></tbody></table>
+<h3>3.3 实验室管理员</h3>
+<table><thead><tr><th>项目</th><th>描述</th></tr></thead><tbody><tr><td>对应权限角色</td><td>实验室管理员</td></tr><tr><td>角色描述</td><td>学院实验室中心的在岗教师，对全院实验室资产与运维负总责</td></tr><tr><td>核心目标</td><td>台账准确、工单闭环、随时能拿出运维数据向学院汇报</td></tr><tr><td>痛点</td><td>房间、资产、报修三份 Excel 互相对不上；无效报修占用维修资源；上级要数据时只能临时统计</td></tr><tr><td>数据可见范围</td><td>全部资产、全部报修、运维看板</td></tr></tbody></table>
+<h3>3.4 资产管理员</h3>
+<table><thead><tr><th>项目</th><th>描述</th></tr></thead><tbody><tr><td>对应权限角色</td><td>资产管理员</td></tr><tr><td>角色描述</td><td>负责固定资产卡片、盘点与报废手续的行政人员</td></tr><tr><td>核心目标</td><td>每台设备从入库到报废的每一步变动都有据可查；盘点时能一次导出全量台账</td></tr><tr><td>痛点</td><td>调拨、报废不留痕，账实不符时定位不到责任环节；新购设备入库靠手工逐条录入</td></tr><tr><td>数据可见范围</td><td>全部资产与全部报修，但对报修单<strong>只读</strong>、无处理权限</td></tr></tbody></table>
+<h3>3.5 观察者与系统管理员</h3>
+<table><thead><tr><th>项目</th><th>描述</th></tr></thead><tbody><tr><td>对应权限角色</td><td>实验室观察员、超级管理员</td></tr><tr><td>角色描述</td><td>观察员为学院督导或上级检查人员，只查不改；超级管理员负责账号、角色与菜单配置</td></tr><tr><td>核心目标</td><td>观察员：不动任何数据也能看清全院运维状况；管理员：给不同岗位配不同角色，各人只看该看的</td></tr><tr><td>痛点</td><td>观察员向各部门要数据太慢；管理员一旦配错权限，会出现"按钮看得见、点下去报 403"</td></tr><tr><td>数据可见范围</td><td>观察员为全部数据只读；超级管理员为全量</td></tr></tbody></table>
+<hr/>
+<h2>4 用户故事</h2>
+<h3>4.1 用户故事清单</h3>
+<p>全部故事采用统一句式：<strong>作为〈角色〉，我想要〈功能〉，以便〈价值〉</strong>。共 14 个。</p>
+<table><thead><tr><th>编号</th><th class="ta-center">优先级</th><th>角色</th><th>用户故事</th><th>业务价值</th></tr></thead><tbody><tr><td>US-01</td><td class="ta-center">高</td><td>报修申请人</td><td>作为报修申请人，我想要用手机扫设备标签上的二维码就直接进入报修页并自动带出设备编号与名称，以便不再手抄编号、也不会抄错。</td><td>降低报修出错率，缩短报修耗时</td></tr><tr><td>US-02</td><td class="ta-center">高</td><td>报修申请人</td><td>作为报修申请人，我想要在提交报修时附上故障照片，以便维修人员出发前就能预判故障、一次带对工具和零件。</td><td>减少返工，缩短修复时长</td></tr><tr><td>US-03</td><td class="ta-center">高</td><td>报修申请人</td><td>作为报修申请人，我想要在报修单上看到当前处理环节与完整处理时间线，以便知道还要等多久、该找谁催。</td><td>消除信息黑洞，降低沟通成本</td></tr><tr><td>US-04</td><td class="ta-center">中</td><td>报修申请人</td><td>作为报修申请人，我想要在维修完成后给这次服务打 1~5 分并留言，以便让管理员知道维修质量究竟如何。</td><td>形成服务质量反馈闭环</td></tr><tr><td>US-05</td><td class="ta-center">高</td><td>维修执行方</td><td>作为维修执行方，我想要一打开列表就看到全部待处理工单、并按故障等级先后排列，以便安排当天的维修顺序、不让紧急故障被淹没。</td><td>提高工单处理效率</td></tr><tr><td>US-06</td><td class="ta-center">高</td><td>维修执行方</td><td>作为维修执行方，我想要把工单从"待维修"推进到"维修中"、修完再推进到"已完成"，以便系统里的进度与现场实际情况一致。</td><td>状态可追踪，杜绝"口头说修好了"</td></tr><tr><td>US-07</td><td class="ta-center">中</td><td>维修执行方</td><td>作为维修执行方，我想要在结单时登记本次维修的实际花费，以便管理员期末统计维修经费支出。</td><td>支撑费用分析，为预算提供依据</td></tr><tr><td>US-08</td><td class="ta-center">高</td><td>实验室管理员</td><td>作为实验室管理员，我想要审核报修申请并拒绝明显不属于设备故障的申请，以便无效工单不占用维修工时。</td><td>提升工单质量，节约维修资源</td></tr><tr><td>US-09</td><td class="ta-center">高</td><td>资产管理员</td><td>作为资产管理员，我想要按条件筛选资产台账并一键导出 Excel，以便应对每学期一次的资产盘点。</td><td>盘点由半天量级压缩到分钟量级</td></tr><tr><td>US-10</td><td class="ta-center">高</td><td>资产管理员</td><td>作为资产管理员，我想要把新购设备的清单一次性批量导入，以便几十台设备入库时不必逐条手工录入。</td><td>消除重复劳动，降低录入错误</td></tr><tr><td>US-11</td><td class="ta-center">中</td><td>资产管理员</td><td>作为资产管理员，我想要查看每台设备从入库到报废的完整变更履历，以便账实不符时能定位到具体环节与操作人。</td><td>责任可追溯，审计有依据</td></tr><tr><td>US-12</td><td class="ta-center">中</td><td>实验室管理员</td><td>作为实验室管理员，我想要在维护实验室房间信息时被系统拦住——房间里还有设备就不允许删除，以便台账中不出现找不到归属的孤儿数据。</td><td>保证数据完整性</td></tr><tr><td>US-13</td><td class="ta-center">高</td><td>实验室管理员</td><td>作为实验室管理员，我想要在首页直接看到资产总数、维修中资产数、待审核与已完成报修数以及对应的趋势图，以便随时能拿出运维数据向学院汇报。</td><td>从"临时要数据"变为"数据随时在"</td></tr><tr><td>US-14</td><td class="ta-center">中</td><td>超级管理员</td><td>作为超级管理员，我想要给不同岗位分配不同角色与菜单权限，以便每个人只看到自己该看的数据和按钮。</td><td>权限边界清晰，避免越权访问</td></tr></tbody></table>
+<h3>4.2 验收标准（Given-When-Then）</h3>
+<p>为 6 个核心故事编写了验收标准（任务要求不少于 5 个）。</p>
+<h4>US-01 扫码报修</h4>
+<p><strong>场景 1｜扫码带出设备信息</strong></p>
+<ul><li><strong>Given</strong> 报修申请人已登录系统，且目标资产当前状态为"正常"</li><li><strong>When</strong> 该申请人扫描该资产二维码打开报修页并填写故障描述后提交</li><li><strong>Then</strong> 系统自动填充资产编号与名称，生成的报修单状态为"待审核"，并新增一条"提交报修"的履历记录</li></ul>
+<p><strong>场景 2｜对维修中的资产再次报修</strong></p>
+<ul><li><strong>Given</strong> 该资产状态已是"维修中"（前一张报修单尚未结单）</li><li><strong>When</strong> 申请人对该资产提交报修</li><li><strong>Then</strong> 系统提示"该资产当前不可报修"，且不生成任何报修单</li></ul>
+<h4>US-03 查看报修进度</h4>
+<p><strong>场景 1｜正常查看</strong></p>
+<ul><li><strong>Given</strong> 存在一张已经历 3 次状态流转的报修单</li><li><strong>When</strong> 申请人打开该报修单详情</li><li><strong>Then</strong> 时间线按时间正序显示"提交报修 → 状态流转 ×3"，每条记录均含操作人与操作时间</li></ul>
+<p><strong>场景 2｜越权查看他人单据</strong></p>
+<ul><li><strong>Given</strong> 申请人 A 登录，目标报修单由申请人 B 提交，且 A 不属于可处理报修的角色</li><li><strong>When</strong> A 直接访问该报修单详情接口</li><li><strong>Then</strong> 系统拒绝访问并返回"没有权限访问该报修单"</li></ul>
+<h4>US-05 维修方查看全部工单</h4>
+<p><strong>场景 1｜处理角色可见全量</strong></p>
+<ul><li><strong>Given</strong> 以维修工程师身份登录，库中存在 3 张由不同申请人提交的报修单</li><li><strong>When</strong> 打开报修列表</li><li><strong>Then</strong> 3 张全部可见</li></ul>
+<p><strong>场景 2｜普通角色仅见本人</strong></p>
+<ul><li><strong>Given</strong> 以报修申请人身份登录，库中存在本人 1 张、他人 2 张报修单</li><li><strong>When</strong> 打开报修列表</li><li><strong>Then</strong> 仅返回本人那 1 张</li></ul>
+<h4>US-08 审核报修申请</h4>
+<p><strong>场景 1｜审核通过</strong></p>
+<ul><li><strong>Given</strong> 报修单状态为"待审核"</li><li><strong>When</strong> 实验室管理员点击"通过"</li><li><strong>Then</strong> 状态变为"待维修"，并新增一条状态流转履历</li></ul>
+<p><strong>场景 2｜拒绝申请</strong></p>
+<ul><li><strong>Given</strong> 报修单状态为"待审核"，其关联资产已被联动置为"维修中"</li><li><strong>When</strong> 实验室管理员点击"拒绝"</li><li><strong>Then</strong> 状态变为"已拒绝"，且关联资产状态恢复为"正常"</li></ul>
+<p><strong>场景 3｜跳过中间环节</strong></p>
+<ul><li><strong>Given</strong> 报修单状态为"待审核"</li><li><strong>When</strong> 试图直接把状态改为"已完成"</li><li><strong>Then</strong> 系统抛出"非法的报修状态流转"，数据库不发生任何变更</li></ul>
+<h4>US-09 台账筛选与导出</h4>
+<p><strong>场景 1｜按房间筛选导出</strong></p>
+<ul><li><strong>Given</strong> 台账中存在房间 A 的 3 台设备与房间 B 的 2 台设备</li><li><strong>When</strong> 资产管理员筛选"房间 = A"并执行导出</li><li><strong>Then</strong> 导出的 Excel 仅包含 A 的 3 条记录</li></ul>
+<p><strong>场景 2｜已删除资产不出现在导出结果中</strong></p>
+<ul><li><strong>Given</strong> 房间 A 的 3 台设备中有 1 台已被逻辑删除</li><li><strong>When</strong> 导出该房间的资产</li><li><strong>Then</strong> 导出结果只有 2 条</li></ul>
+<h4>US-12 阻止误删仍有设备的房间</h4>
+<p><strong>场景 1｜房间下仍有设备</strong></p>
+<ul><li><strong>Given</strong> 房间 A 下有 2 台设备</li><li><strong>When</strong> 管理员执行删除房间 A</li><li><strong>Then</strong> 系统提示"实验室下存在资产，不能删除"，房间与设备均不受影响</li></ul>
+<p><strong>场景 2｜房间已清空</strong></p>
+<ul><li><strong>Given</strong> 房间 B 下没有任何设备</li><li><strong>When</strong> 管理员执行删除房间 B</li><li><strong>Then</strong> 删除成功，且为逻辑删除（数据记录仍保留在库中，仅删除标记被置位）</li></ul>
+<hr/>
+<h2>5 非功能需求</h2>
+<blockquote><p><strong>说明</strong>：本项目的非功能指标<strong>未做专门的性能压测与安全渗透测试</strong>。</p><p>下表中"设计目标"为编写时设定的验收口径，"现状与证据"一栏只写可从仓库或运行结果中核对的事实；</p><p>凡未验证的一律标注<strong>未验证</strong>，不按"已达成"陈述。</p></blockquote>
+<table><thead><tr><th>类型</th><th>需求描述</th><th>指标</th><th>现状与证据</th></tr></thead><tbody><tr><td><strong>性能</strong></td><td>运维工作台首屏（4 项指标 + 4 张图）在校园网内的可接受加载时间</td><td>设计目标：首屏 ≤ 3 s</td><td><strong>未验证</strong>（未做压测）。结构上为 2 个聚合接口，趋势图由前端补零后一次渲染</td></tr><tr><td><strong>性能</strong></td><td>台账 / 工单列表分页响应</td><td>设计目标：单页 ≤ 2 s</td><td>列表查询均带分页参数与逻辑删除条件，并建有必要索引；<strong>未做压力测试</strong></td></tr><tr><td><strong>可用性</strong></td><td>服务可用性</td><td>设计目标：教学时段可用</td><td>单机部署、单体 JAR，<strong>无高可用与故障转移</strong>（属范围外，见项目范围说明）</td></tr><tr><td><strong>可用性</strong></td><td>操作可理解性</td><td>界面提示为中文业务语言，危险操作给出明确拒绝原因</td><td>校验失败均返回具体原因（如"资产维修中，不能删除"），非通用错误码</td></tr><tr><td><strong>安全性</strong></td><td>账号口令存储</td><td>一律哈希存储，禁止明文</td><td>已实现：口令以 BCrypt 哈希入库</td></tr><tr><td><strong>安全性</strong></td><td>身份认证</td><td>无状态令牌认证</td><td>已实现：JWT 令牌，请求头 <code>Authorization</code>，有效期 30 分钟</td></tr><tr><td><strong>安全性</strong></td><td>权限控制</td><td>菜单/按钮级 + 数据行级双层控制</td><td>已实现：接口层注解校验 + 服务层按角色过滤数据范围；角色判定收敛在单一工具类，避免多处口径漂移</td></tr><tr><td><strong>安全性</strong></td><td>密钥管理</td><td>生产环境密钥不得使用默认值</td><td><strong>待改进</strong>：令牌签名密钥当前存在默认弱值，生产部署必须通过环境变量覆盖（已列入《CI/CD 部署方案》的配置差异章节）</td></tr><tr><td><strong>兼容性</strong></td><td>浏览器</td><td>支持主流现代浏览器的近两个大版本</td><td>前端基于 Vue 3 + Element Plus，开发期在 Chromium 内核浏览器验证</td></tr><tr><td><strong>兼容性</strong></td><td>屏幕适配</td><td>管理端在 1366×768 及以上分辨率可正常使用</td><td>表格列宽与弹窗已按窄屏做过收敛处理；<strong>未适配移动端原生 App</strong>（属范围外）</td></tr><tr><td><strong>可维护性</strong></td><td>代码组织</td><td>业务代码与框架代码分离，新增模块不改框架配置</td><td>已实现：业务代码集中在独立包内，框架侧使用通配符扫描，新增子包无需改动配置</td></tr><tr><td><strong>可维护性</strong></td><td>规则单一来源</td><td>同一业务口径只允许有一处定义</td><td>已实现：状态常量、角色判定、状态机校验各自收敛到单一类；改动时须同步的落点已在开发文档中列明</td></tr><tr><td><strong>可维护性</strong></td><td>自动化测试</td><td>核心业务规则有自动化用例覆盖</td><td><strong>部分满足</strong>：现有 7 个单元测试集中在报修状态机与两类删除约束；提交校验、评价规则、权限判定尚无覆盖（已列为待补项）</td></tr></tbody></table>
+<hr/>
+<h2>6 需求评审：INVEST 自评</h2>
+<table><thead><tr><th>原则</th><th>符合情况</th><th>说明与改进方向</th></tr></thead><tbody><tr><td><strong>Independent 独立</strong></td><td>⚠️ 部分符合</td><td>US-01 与 US-03 同处报修主流程；US-01 还依赖台账中已有资产数据（即 US-09/US-10 的产物）。这三条无法完全独立交付，作为一条完整业务链理解更合适。</td></tr><tr><td><strong>Negotiable 可协商</strong></td><td>✅ 符合</td><td>故事只约定"用户要什么"，未写死实现方式。例如 US-05 只要求"按故障等级排序"，排序字段与呈现形式仍可与教师、维修方协商调整。</td></tr><tr><td><strong>Valuable 有价值</strong></td><td>✅ 符合</td><td>14 条均指向第 1.2 节列出的真实痛点（台账无痕、进度不透明、费用无统计），无"为做而做"的功能。</td></tr><tr><td><strong>Estimable 可估算</strong></td><td>✅ 符合</td><td>每条故事都能对应到明确的接口与页面，工作量可按"接口 + 页面 + 校验"拆分估算；无技术不确定项。</td></tr><tr><td><strong>Small 足够小</strong></td><td>⚠️ 部分符合</td><td>US-13（运维工作台）一条里塞了 4 项指标与 4 张图，颗粒度偏大。改进方向：拆为"指标卡"与"趋势图"两条故事，便于分别验收。</td></tr><tr><td><strong>Testable 可测试</strong></td><td>✅ 符合</td><td>6 个核心故事的验收标准均写成 GWT，且判定依据可落到数据库字段（如资产状态、删除标记）与接口返回上；业务规则编号 BR-01~06 可直接被测试用例引用。</td></tr></tbody></table>
+<p><strong>自评结论</strong>：14 条故事在 Negotiable / Valuable / Estimable / Testable 四方面完全符合； Independent 与 Small 存在已知短板（如上两行），已在后续迭代中列为改进项，<strong>本期不调整</strong>——理由是这两项短板不影响交付与验收， 而重拆会导致已完成的实现与故事编号对不上。</p>
+<hr/>
+<h2>附录 A　需求 → 实现索引</h2>
+<blockquote><p>用于自查"文档写了但代码没有"的情况。每条故事都能在系统中找到对应落点，无虚构功能。</p></blockquote>
+<table><thead><tr><th class="ta-center">故事</th><th>后端落点</th><th>前端落点</th></tr></thead><tbody><tr><td class="ta-center">US-01</td><td>资产二维码生成接口</td><td>资产页"标签"按钮与二维码弹窗</td></tr><tr><td class="ta-center">US-02</td><td>报修单附件字段</td><td>报修表单的图片上传（最多 4 张、单张 5 MB）</td></tr><tr><td class="ta-center">US-03</td><td>报修处理记录查询接口</td><td>报修详情页时间线</td></tr><tr><td class="ta-center">US-04</td><td>维修评价接口</td><td>报修详情页评分与留言</td></tr><tr><td class="ta-center">US-05</td><td>报修列表接口 + 角色数据过滤</td><td>报修列表页</td></tr><tr><td class="ta-center">US-06</td><td>报修状态流转校验</td><td>详情页可用状态按钮</td></tr><tr><td class="ta-center">US-07</td><td>维修成本字段</td><td>报修处理表单</td></tr><tr><td class="ta-center">US-08</td><td>报修审核接口</td><td>报修列表页审核与拒绝按钮</td></tr><tr><td class="ta-center">US-09</td><td>台账条件查询 + Excel 导出</td><td>资产列表页筛选区与导出按钮</td></tr><tr><td class="ta-center">US-10</td><td>资产批量导入接口 + 导入模板下载</td><td>资产列表页拖拽上传</td></tr><tr><td class="ta-center">US-11</td><td>资产履历查询接口</td><td>资产详情页时间线</td></tr><tr><td class="ta-center">US-12</td><td>房间删除前置校验</td><td>房间列表页删除按钮</td></tr><tr><td class="ta-center">US-13</td><td>运维看板聚合接口（指标 / 图表）</td><td>首页 4 指标卡 + 4 张图表</td></tr><tr><td class="ta-center">US-14</td><td>框架原生角色与菜单权限 + 实验室角色判定</td><td>前端权限指令与角色判定工具</td></tr></tbody></table>
+<hr/>
+<p><em>本文件为《需求规格说明书》源稿，导出 PDF 前须完成人工改写与封面补全。</em></p>
+  </section>
+</body></html>

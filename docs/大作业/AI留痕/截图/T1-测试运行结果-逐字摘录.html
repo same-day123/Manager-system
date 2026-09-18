@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>T1 单元测试运行结果（逐字摘录）</title>
+<style>
+  body { margin: 0; padding: 32px; background: #1e1e1e; font-family: "Cascadia Mono", Consolas, "Microsoft YaHei", monospace; }
+  .note { color: #d7ba7d; font-size: 13px; line-height: 1.9; margin-bottom: 18px; max-width: 1180px; }
+  .note b { color: #ffd479; }
+  .term { background: #141414; border: 1px solid #3c3c3c; border-radius: 6px; padding: 22px 26px; max-width: 1180px; }
+  .term .cmd { color: #4ec9b0; font-size: 15px; line-height: 1.75; margin-bottom: 14px; word-break: break-all; }
+  .term pre { margin: 0; color: #d4d4d4; font-size: 14px; line-height: 1.75; white-space: pre-wrap; }
+  .ok { color: #6a9955; font-weight: bold; }
+  .run { color: #9cdcfe; }
+  .hit { color: #ce9178; font-weight: bold; }
+</style>
+</head>
+<body>
+  <div class="note">
+    <b>说明：</b>本页内容为 <b>.workbuddy/logs/t1-run2.log 第 37~58 行</b>的逐字摘录，<b>未做任何改动</b>，
+    仅为便于截屏 / 放进 PPT 而排版。原始 ASCII 日志见
+    <b>docs/大作业/AI留痕/截图/T1-Tests-run-汇总行.txt</b>，完整构建日志见 <b>.workbuddy/logs/t1-run2.log</b>。
+  </div>
+  <div class="term">
+    <div class="cmd">$ powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy/tools/mvnx.ps1 -o -B clean test</div>
+    <pre>[INFO] -------------------------------------------------------
+<span class="run">[INFO]  T E S T S</span>
+[INFO] -------------------------------------------------------
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.91 s - in com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.43 s - in com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO]
+[INFO] Results:
+[INFO]
+<span class="hit">[INFO] Tests run: 30, Failures: 0, Errors: 0, Skipped: 0</span>
+[INFO]
+[INFO] ------------------------------------------------------------------------
+<span class="ok">[INFO] BUILD SUCCESS</span>
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:46 min
+[INFO] Finished at: 2026-09-17T20:55:44+08:00
+[INFO] ------------------------------------------------------------------------</pre>
+  </div>
+</body>
+</html>

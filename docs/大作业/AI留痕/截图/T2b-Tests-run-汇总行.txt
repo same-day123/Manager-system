@@ -1,0 +1,71 @@
+T2b 测试加固轮 —— Tests run 汇总行（逐字摘录，未改动一个字符）
+来源日志：D:\code\Manager_system\.workbuddy\logs\t2b-run2-final.log
+          （第 35~38 行 / 第 129·215·502~512 行 / 第 520~529 行）
+命令：powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy/tools/mvnx.ps1 -o -B clean test
+运行时间：2026-09-17 22:09:45 ~ 22:11:23（Total time 01:38 min）
+说明：本轮为「单元测试 33 + 集成测试 16」的全量运行。集成测试跑在 H2 1.4.199 内存库上，本地零中间件。
+      与 T2 那一轮（37 个）相比：+3 个公开入口状态机用例，+7 个看板集成用例（含 1 个方言垫片自检），
+      +2 个终态不可回退/不可复活的集成用例。
+
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.ruoyi.project.laboratory.integration.LabAssetIntegrationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.101 s - in com.ruoyi.project.laboratory.integration.LabAssetIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.integration.LabDashboardIntegrationTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.194 s - in com.ruoyi.project.laboratory.integration.LabDashboardIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.integration.LabRepairIntegrationTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.313 s - in com.ruoyi.project.laboratory.integration.LabRepairIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.228 s - in com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s - in com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairStatusMachinePublicEntryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.ruoyi.project.laboratory.service.impl.LabRepairStatusMachinePublicEntryTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 49, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:38 min
+[INFO] Finished at: 2026-09-17T22:11:23+08:00
+[INFO] ------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------
+【证据 1】只有 1 个 profile 生效，生产配置里的 druid 没有被激活（第 66 行）
+22:11:14.773 [main] INFO  c.r.p.l.i.LabAssetIntegrationTest - [logStartupProfileInfo,686] - The following 1 profile is active: "integration"
+
+【证据 2】看板那两条「近 7 天趋势」查询真的在 H2 上执行了（第 131~133 行，mapper debug 原文）
+22:11:21.509 [main] DEBUG c.r.p.l.m.L.selectRepairTrend - [debug,135] - ==>  Preparing: select date_format(create_time, '%m-%d') as name, count(1) as value from lab_repair where del_flag = '0' and create_time >= date_sub(curdate(), interval 6 day) group by date_format(create_time, '%m-%d') order by min(create_time)
+22:11:21.513 [main] DEBUG c.r.p.l.m.L.selectRepairTrend - [debug,135] - ==> Parameters: 
+22:11:21.519 [main] DEBUG c.r.p.l.m.L.selectRepairTrend - [debug,135] - <==      Total: 3
+※ 这条 SQL 是**生产 mapper XML 的原文**，「date_format + date_sub + interval 语法」一个字都没改。
+※ Total: 3 正是 DB-04 期望的「今天 / 3 天前 / 6 天前」三个分组；窗口外第 7 天那条被正确剔除。
+
+【证据 3】维修成本趋势同样执行成功（第 140~142 行）
+22:11:21.530 [main] DEBUG c.r.p.l.m.L.selectRepairCostTrend - [debug,135] - ==>  Preparing: select date_format(create_time, '%m-%d') as name, ifnull(sum(repair_cost), 0) as value from lab_repair where del_flag = '0' and create_time >= date_sub(curdate(), interval 6 day) group by date_format(create_time, '%m-%d') order by min(create_time)
+22:11:21.536 [main] DEBUG c.r.p.l.m.L.selectRepairCostTrend - [debug,135] - <==      Total: 3
+
+--------------------------------------------------------------------
+【补充：一次已知且无害的环境噪声 —— 必须如实说明，不能当成"全绿无杂音"】
+日志里会出现 surefire 的 `PpidChecker` 报错与 target/surefire-reports 下的
+`*-jvmRun1.dump` 文件，内容为：
+
+  System.exit() or native command error interrupted process checker.
+  java.lang.IllegalStateException: Cannot use PPID 4052 process information. Going to use NOOP events.
+      at org.apache.maven.surefire.booter.PpidChecker.checkProcessInfo(PpidChecker.java:155)
+      at org.apache.maven.surefire.booter.PpidChecker.isProcessAlive(PpidChecker.java:116)
+      at org.apache.maven.surefire.booter.ForkedBooter$2.run(ForkedBooter.java:214)
+
+根因（本轮实测定位）：Surefire 2.22.2 的 PpidChecker 会调 Windows 的 WMIC 去查父进程是否还活着；
+本机安全策略拦截 WMIC → 该次探测失败 → 它**自行降级为 NOOP events** 并写一个 dump 文件。
+**测试照常全部执行**：本次 49/49 通过、BUILD SUCCESS，dump 与测试结果无关。
+（历史记录里把它记作「WMIC 告警·干扰项」，本轮把根因钉到了具体类与行号。）

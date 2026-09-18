@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>T2b 测试加固轮 · 测试运行结果（逐字摘录）</title>
+<style>
+  body { margin: 0; padding: 32px; background: #1e1e1e; font-family: "Cascadia Mono", Consolas, "Microsoft YaHei", monospace; }
+  h1 { color: #dcdcaa; font-size: 20px; margin: 0 0 16px; }
+  .note { color: #d7ba7d; font-size: 13px; line-height: 1.9; margin-bottom: 18px; max-width: 1180px; }
+  .note b { color: #ffd479; }
+  .term { background: #141414; border: 1px solid #3c3c3c; border-radius: 6px; padding: 22px 26px; max-width: 1180px; margin-bottom: 22px; }
+  .term .cmd { color: #4ec9b0; font-size: 15px; line-height: 1.75; margin-bottom: 14px; word-break: break-all; }
+  .term pre { margin: 0; color: #d4d4d4; font-size: 14px; line-height: 1.75; white-space: pre-wrap; }
+  .ok { color: #6a9955; font-weight: bold; }
+  .run { color: #9cdcfe; }
+  .hit { color: #ce9178; font-weight: bold; }
+  .cap { color: #569cd6; font-size: 13px; margin: 0 0 8px; }
+  .warn { color: #d7ba7d; }
+</style>
+</head>
+<body>
+
+  <h1>T2b 测试加固轮 · 全量测试运行结果</h1>
+
+  <div class="note">
+    <b>说明：</b>本页内容为 <b>.workbuddy/logs/t2b-run2-final.log</b> 的逐字摘录
+    （第 35~38 行 / 第 129·215·502~512 行 / 第 520~529 行 / 第 131~142 行），
+    <b>未做任何改动</b>，仅为便于截屏 / 放进 PPT 而排版。原始 ASCII 摘录见
+    <b>docs/大作业/AI留痕/截图/T2b-Tests-run-汇总行.txt</b>，完整构建日志见
+    <b>.workbuddy/logs/t2b-run2-final.log</b>。<br>
+    本轮为「单元测试 <b>33</b> + 集成测试 <b>16</b> = <b>49</b>」全量运行：
+    <b>集成测试全部跑在 H2 1.4.199 内存库上，本地不需要 MySQL / Redis 等任何中间件</b>。<br>
+    与上一轮（37 个）的差值：<b>+3</b> 个「经 updateLabRepair 公开入口」的状态机用例、
+    <b>+7</b> 个看板集成用例（含 1 个方言垫片自检）、<b>+2</b> 个终态不可回退 / 不可复活的集成用例。
+  </div>
+
+  <div class="term">
+    <div class="cmd">$ powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy/tools/mvnx.ps1 -o -B clean test</div>
+    <pre>[INFO] -------------------------------------------------------
+<span class="run">[INFO]  T E S T S</span>
+[INFO] -------------------------------------------------------
+[INFO] Running com.ruoyi.project.laboratory.integration.LabAssetIntegrationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.101 s - in com.ruoyi.project.laboratory.integration.LabAssetIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.integration.LabDashboardIntegrationTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.194 s - in com.ruoyi.project.laboratory.integration.LabDashboardIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.integration.LabRepairIntegrationTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.313 s - in com.ruoyi.project.laboratory.integration.LabRepairIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.228 s - in com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s - in com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairStatusMachinePublicEntryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.ruoyi.project.laboratory.service.impl.LabRepairStatusMachinePublicEntryTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO]
+[INFO] Results:
+[INFO]
+<span class="hit">[INFO] Tests run: 49, Failures: 0, Errors: 0, Skipped: 0</span>
+[INFO]
+[INFO] ------------------------------------------------------------------------
+<span class="ok">[INFO] BUILD SUCCESS</span>
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:38 min
+[INFO] Finished at: 2026-09-17T22:11:23+08:00
+[INFO] ------------------------------------------------------------------------</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 1 ｜ 只有 1 个 profile 生效，生产配置里的 druid 没有被激活（第 66 行）</p>
+    <pre>22:11:14.773 [main] INFO  c.r.p.l.i.LabAssetIntegrationTest - [logStartupProfileInfo,686] - The following 1 profile is active: "integration"</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 2 ｜ 看板「近 7 天报修趋势」在 H2 上真实执行 —— 生产 mapper XML 原文，一字未改（第 131~133 行）</p>
+    <pre>22:11:21.509 [main] DEBUG c.r.p.l.m.L.selectRepairTrend - [debug,135] - ==>  Preparing: select date_format(create_time, '%m-%d') as name, count(1) as value from lab_repair where del_flag = '0' and create_time >= date_sub(curdate(), interval 6 day) group by date_format(create_time, '%m-%d') order by min(create_time)
+22:11:21.513 [main] DEBUG c.r.p.l.m.L.selectRepairTrend - [debug,135] - ==> Parameters:
+22:11:21.519 [main] DEBUG c.r.p.l.m.L.selectRepairTrend - [debug,135] - <span class="ok">&lt;==      Total: 3</span>
+<span class="ok">※ Total: 3 正是 DB-04 期望的「今天 / 3 天前 / 6 天前」三个分组；窗口外的第 7 天那条被正确剔除。</span>
+<span class="ok">※ date_format() 与 date_sub(curdate(), interval 6 day) 在 H2 上由测试侧同名函数承接（create alias ... for "类.方法"），</span>
+<span class="ok">  生产 mapper XML 一个字都没动 —— 这正是偏移 D-19 的收口方式。</span></pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 3 ｜ 维修成本趋势同样执行成功（第 140~142 行）</p>
+    <pre>22:11:21.530 [main] DEBUG c.r.p.l.m.L.selectRepairCostTrend - [debug,135] - ==>  Preparing: select date_format(create_time, '%m-%d') as name, ifnull(sum(repair_cost), 0) as value from lab_repair where del_flag = '0' and create_time >= date_sub(curdate(), interval 6 day) group by date_format(create_time, '%m-%d') order by min(create_time)
+22:11:21.536 [main] DEBUG c.r.p.l.m.L.selectRepairCostTrend - [debug,135] - <==      Total: 3</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap warn">补充（如实说明）｜ 一次已知且无害的环境噪声：surefire 的 PpidChecker 报错与 jvmRun1.dump</p>
+    <pre class="warn">System.exit() or native command error interrupted process checker.
+java.lang.IllegalStateException: Cannot use PPID 4052 process information. Going to use NOOP events.
+    at org.apache.maven.surefire.booter.PpidChecker.checkProcessInfo(PpidChecker.java:155)
+    at org.apache.maven.surefire.booter.PpidChecker.isProcessAlive(PpidChecker.java:116)
+    at org.apache.maven.surefire.booter.ForkedBooter$2.run(ForkedBooter.java:214)</pre>
+    <pre><span class="warn">根因（本轮实测定位）：Surefire 2.22.2 的 PpidChecker 会调 Windows 的 WMIC 查父进程是否存活；
+本机安全策略拦截 WMIC → 该次探测失败 → 它自行降级为 NOOP events 并留下一个 dump 文件。
+测试照常全部执行：本次 49/49 通过、BUILD SUCCESS。这个 dump 与测试结果无关，
+列在这里是为了不让它被误读成"构建出问题了"。</span></pre>
+  </div>
+
+</body>
+</html>

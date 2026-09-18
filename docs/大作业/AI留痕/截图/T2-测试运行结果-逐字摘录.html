@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>T2 集成测试运行结果（逐字摘录）</title>
+<style>
+  body { margin: 0; padding: 32px; background: #1e1e1e; font-family: "Cascadia Mono", Consolas, "Microsoft YaHei", monospace; }
+  .note { color: #d7ba7d; font-size: 13px; line-height: 1.9; margin-bottom: 18px; max-width: 1180px; }
+  .note b { color: #ffd479; }
+  .term { background: #141414; border: 1px solid #3c3c3c; border-radius: 6px; padding: 22px 26px; max-width: 1180px; margin-bottom: 22px; }
+  .term .cmd { color: #4ec9b0; font-size: 15px; line-height: 1.75; margin-bottom: 14px; word-break: break-all; }
+  .term pre { margin: 0; color: #d4d4d4; font-size: 14px; line-height: 1.75; white-space: pre-wrap; }
+  .ok { color: #6a9955; font-weight: bold; }
+  .run { color: #9cdcfe; }
+  .hit { color: #ce9178; font-weight: bold; }
+  .cap { color: #569cd6; font-size: 13px; margin: 0 0 8px; }
+</style>
+</head>
+<body>
+  <div class="note">
+    <b>说明：</b>本页内容为 <b>.workbuddy/logs/t2-run2-final.log</b> 的逐字摘录（第 36~46 行 + 第 66~77 行 + 第 335~346 行），
+    <b>未做任何改动</b>，仅为便于截屏 / 放进 PPT 而排版。原始 ASCII 日志见
+    <b>docs/大作业/AI留痕/截图/T2-Tests-run-汇总行.txt</b>，完整构建日志见 <b>.workbuddy/logs/t2-run2-final.log</b>。<br>
+    本次为「单元测试 30 + 集成测试 7」全量运行：<b>集成测试跑在 H2 1.4.199 内存库上，本地不需要任何中间件</b>。
+  </div>
+
+  <div class="term">
+    <div class="cmd">$ powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy/tools/mvnx.ps1 -o -B clean test</div>
+    <pre>[INFO] -------------------------------------------------------
+<span class="run">[INFO]  T E S T S</span>
+[INFO] -------------------------------------------------------
+[INFO] Running com.ruoyi.project.laboratory.integration.LabAssetIntegrationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.047 s - in com.ruoyi.project.laboratory.integration.LabAssetIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.integration.LabRepairIntegrationTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.334 s - in com.ruoyi.project.laboratory.integration.LabRepairIntegrationTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.257 s - in com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.046 s - in com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s - in com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s - in com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO]
+[INFO] Results:
+[INFO]
+<span class="hit">[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0</span>
+[INFO]
+[INFO] ------------------------------------------------------------------------
+<span class="ok">[INFO] BUILD SUCCESS</span>
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:48 min
+[INFO] Finished at: 2026-09-17T21:16:49+08:00
+[INFO] ------------------------------------------------------------------------
+EXITCODE=0</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 A ｜ 只有 1 个 profile 生效，生产配置里的 druid 没有被激活（第 66 行）</p>
+    <pre>21:16:40.867 [main] INFO  c.r.p.l.i.LabAssetIntegrationTest - [logStartupProfileInfo,686] - The following 1 profile is active: "integration"</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 B ｜ 连接池是 Druid，但它包的是 H2（第 67~69 行）：spring.datasource.druid.url 未配置，回落到 spring.datasource.url</p>
+    <pre>21:16:40.xxx [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - [dataSource,68] - Init DruidDataSource
+21:16:41.xxx [main] ERROR c.a.d.p.DruidDataSource - [validationQueryCheck,1112] - testWhileIdle is true, validationQuery not set
+21:16:41.xxx [main] INFO  c.a.d.p.DruidDataSource - [init,865] - {dataSource-1} inited</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 C ｜ Quartz 走的是内存版 RAMJobStore，不连库、不建表（第 70~77 行）</p>
+    <pre>21:16:43.xxx [main] INFO  o.q.s.RAMJobStore - [initialize,155] - RAMJobStore initialized.
+  Using job-store 'org.quartz.simpl.RAMJobStore' - which does not support persistence. and is not clustered.</pre>
+  </div>
+
+  <div class="term">
+    <p class="cap">证据 D ｜ MyBatis 真实执行的 SQL（mapper debug 日志节选，第 87~120 行）</p>
+    <pre>==>  Preparing: insert into lab_asset ( asset_code, asset_name, asset_type, room_id, status, del_flag, create_by, create_time ) values ( ?, ?, ?, ?, ?, ?, ?, sysdate() )
+==> Parameters: ZC-9001(String), 数字万用表(String), instrument(String), 1(Long), 0(String), 0(String), lab_tester(String)
+<span class="ok">※ H2 1.4.199 在 MODE=MySQL 下认 sysdate()</span> —— 这条 INSERT 真的成功了（IT-07 断言 lab_asset 净增 2 条并通过）
+
+==>  Preparing: select ... from lab_asset a left join lab_room r on r.room_id = a.room_id where a.asset_code = ? and a.del_flag = '0' limit 1
+==> Parameters: ZC-0001(String)
+&lt;==      Total: 1
+<span class="ok">※ H2 同样认 limit 1</span> —— 这条命中的是基线资产编号，IT-07 的「撞号失败」正是它触发的</pre>
+  </div>
+</body>
+</html>

@@ -76,6 +76,17 @@
             <optional>true</optional> <!-- 表示依赖不会传递 -->
         </dependency>
 
+        <!-- H2 内存库：仅供集成测试跑「Service → Mapper → 数据库」链路，test scope 不进生产包。
+             ⚠️ 版本必须写死 1.4.199 —— Spring Boot 2.5.15 的依赖管理指向 1.4.200，
+             而本地离线仓库里只有 1.4.199，不锁版本会因拉不到 jar 直接构建失败（报错是
+             Could not resolve dependencies，很容易误判成网络问题）。 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.199</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- spring security 安全认证 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -60,7 +60,10 @@
           <dict-tag :options="lab_asset_status" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="260" fixed="right" class-name="small-padding fixed-width">
+      <!-- 操作列宽度 320px 的依据：本列有 4 个「图标 + 两字」按钮（修改 / 履历 / 标签 / 删除），
+           实测并排需要约 306px；原先的 260px 会把「删除」挤到第二行，行高由 52px 撑到 63px。
+           320px 在 1920 屏下不引入横向滚动（本表声明合计 1465px < 内容区 1720px）。 -->
+      <el-table-column label="操作" align="center" width="320" fixed="right" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['laboratory:asset:edit']">修改</el-button>
           <el-button link type="primary" icon="Clock" @click="handleRecords(scope.row)" v-hasPermi="['laboratory:asset:query']">履历</el-button>

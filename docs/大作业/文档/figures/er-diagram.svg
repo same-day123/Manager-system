@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  图 7-1　实体关系图（ER）
+  用途：架构设计文档 7.1 节；同时供答辩 PPT 参考。
+  字段与类型取自 sql/laboratory_schema.sql；仅画关键字段（完整字段见文档 7.2 节）。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 620" width="1160" height="620"
+     font-family="Microsoft YaHei, SimHei, sans-serif">
+  <defs>
+    <style>
+      .ent   { fill:#fdfcfb; stroke:#b8a89c; stroke-width:1.5; }
+      .head  { fill:#efe9e4; stroke:#b8a89c; stroke-width:1.5; }
+      .fname { font-size:11px; fill:#1a1a1a; }
+      .ftype { font-size:9.5px; fill:#8a8a8a; }
+      .key   { font-size:9px; font-weight:bold; fill:#a0522d; }
+      .rel   { stroke:#8a7a6f; stroke-width:1.6; fill:none; }
+      .rlab  { font-size:10.5px; fill:#5b3f2f; font-weight:bold; }
+      .note  { font-size:10px; fill:#6a6a6a; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1160" height="620" fill="#ffffff"/>
+
+  <!-- ===================== lab_room ===================== -->
+  <rect class="ent"  x="30" y="60" width="230" height="182" rx="5"/>
+  <rect class="head" x="30" y="60" width="230" height="30" rx="5"/>
+  <text x="46" y="80" font-size="12.5" font-weight="bold" fill="#5b3f2f">lab_room　实验室房间</text>
+  <text class="fname" x="42" y="104">room_id</text><text class="ftype" x="188" y="104">bigint</text><text class="key" x="238" y="104">PK</text>
+  <text class="fname" x="42" y="123">room_name</text><text class="ftype" x="176" y="123">varchar(100)</text>
+  <text class="fname" x="42" y="142">room_no</text><text class="ftype" x="188" y="142">varchar(50)</text>
+  <text class="fname" x="42" y="161">college_name</text><text class="ftype" x="176" y="161">varchar(100)</text>
+  <text class="fname" x="42" y="180">manager_id</text><text class="ftype" x="192" y="180">bigint</text>
+  <text class="fname" x="42" y="199">manager_name</text><text class="ftype" x="184" y="199">varchar(64)</text>
+  <text class="fname" x="42" y="218">status</text><text class="ftype" x="199" y="218">char(1)</text>
+  <text class="fname" x="42" y="237">del_flag</text><text class="ftype" x="195" y="237">char(1)</text>
+
+  <!-- ===================== lab_asset ===================== -->
+  <rect class="ent"  x="330" y="60" width="252" height="201" rx="5"/>
+  <rect class="head" x="330" y="60" width="252" height="30" rx="5"/>
+  <text x="346" y="80" font-size="12.5" font-weight="bold" fill="#5b3f2f">lab_asset　资产台账</text>
+  <text class="fname" x="342" y="104">asset_id</text><text class="ftype" x="490" y="104">bigint</text><text class="key" x="544" y="104">PK</text>
+  <text class="fname" x="342" y="123">asset_code</text><text class="ftype" x="486" y="123">varchar(64)</text>
+  <text class="fname" x="342" y="142">asset_name</text><text class="ftype" x="482" y="142">varchar(100)</text>
+  <text class="fname" x="342" y="161">asset_type</text><text class="ftype" x="490" y="161">varchar(50)</text>
+  <text class="fname" x="342" y="180">model</text><text class="ftype" x="494" y="180">varchar(100)</text>
+  <text class="fname" x="342" y="199">price</text><text class="ftype" x="484" y="199">decimal(10,2)</text>
+  <text class="fname" x="342" y="218">purchase_date</text><text class="ftype" x="476" y="218">date</text>
+  <text class="fname" x="342" y="237">room_id</text><text class="ftype" x="494" y="237">bigint</text><text class="key" x="544" y="237">FK</text>
+  <text class="fname" x="342" y="256">status</text><text class="ftype" x="499" y="256">char(1)</text>
+
+  <!-- ===================== lab_repair ===================== -->
+  <rect class="ent"  x="650" y="60" width="272" height="258" rx="5"/>
+  <rect class="head" x="650" y="60" width="272" height="30" rx="5"/>
+  <text x="666" y="80" font-size="12.5" font-weight="bold" fill="#5b3f2f">lab_repair　报修工单</text>
+  <text class="fname" x="662" y="104">repair_id</text><text class="ftype" x="816" y="104">bigint</text><text class="key" x="872" y="104">PK</text>
+  <text class="fname" x="662" y="123">repair_code</text><text class="ftype" x="812" y="123">varchar(64)</text>
+  <text class="fname" x="662" y="142">asset_id</text><text class="ftype" x="820" y="142">bigint</text><text class="key" x="872" y="142">FK</text>
+  <text class="fname" x="662" y="161">fault_description</text><text class="ftype" x="800" y="161">varchar(500)</text>
+  <text class="fname" x="662" y="180">fault_level</text><text class="ftype" x="822" y="180">char(1)</text>
+  <text class="fname" x="662" y="199">applicant_id</text><text class="ftype" x="812" y="199">bigint</text>
+  <text class="fname" x="662" y="218">repair_user_id</text><text class="ftype" x="804" y="218">bigint</text>
+  <text class="fname" x="662" y="237">repair_cost</text><text class="ftype" x="812" y="237">decimal(10,2)</text>
+  <text class="fname" x="662" y="256">finish_time</text><text class="ftype" x="806" y="256">datetime</text>
+  <text class="fname" x="662" y="275">status</text><text class="ftype" x="827" y="275">char(1)</text>
+  <text class="fname" x="662" y="294">attachment_urls</text><text class="ftype" x="800" y="294">varchar(1000)</text>
+  <text class="fname" x="662" y="313">rating</text><text class="ftype" x="829" y="313">int</text>
+
+  <!-- ===================== lab_asset_record ===================== -->
+  <rect class="ent"  x="330" y="360" width="252" height="163" rx="5"/>
+  <rect class="head" x="330" y="360" width="252" height="30" rx="5"/>
+  <text x="346" y="380" font-size="12.5" font-weight="bold" fill="#5b3f2f">lab_asset_record　资产履历</text>
+  <text class="fname" x="342" y="404">record_id</text><text class="ftype" x="486" y="404">bigint</text><text class="key" x="544" y="404">PK</text>
+  <text class="fname" x="342" y="423">asset_id</text><text class="ftype" x="490" y="423">bigint</text><text class="key" x="544" y="423">FK</text>
+  <text class="fname" x="342" y="442">record_type</text><text class="ftype" x="486" y="442">varchar(50)</text>
+  <text class="fname" x="342" y="461">from_value</text><text class="ftype" x="490" y="461">varchar(200)</text>
+  <text class="fname" x="342" y="480">to_value</text><text class="ftype" x="498" y="480">varchar(200)</text>
+  <text class="fname" x="342" y="499">operator_name</text><text class="ftype" x="480" y="499">varchar(64)</text>
+  <text class="fname" x="342" y="518">record_content</text><text class="ftype" x="478" y="518">varchar(500)</text>
+
+  <!-- ===================== lab_repair_record ===================== -->
+  <rect class="ent"  x="650" y="400" width="272" height="163" rx="5"/>
+  <rect class="head" x="650" y="400" width="272" height="30" rx="5"/>
+  <text x="666" y="420" font-size="12.5" font-weight="bold" fill="#5b3f2f">lab_repair_record　报修处理记录</text>
+  <text class="fname" x="662" y="444">record_id</text><text class="ftype" x="816" y="444">bigint</text><text class="key" x="872" y="444">PK</text>
+  <text class="fname" x="662" y="463">repair_id</text><text class="ftype" x="820" y="463">bigint</text><text class="key" x="872" y="463">FK</text>
+  <text class="fname" x="662" y="482">action_name</text><text class="ftype" x="816" y="482">varchar(50)</text>
+  <text class="fname" x="662" y="501">from_status</text><text class="ftype" x="824" y="501">char(1)</text>
+  <text class="fname" x="662" y="520">to_status</text><text class="ftype" x="832" y="520">char(1)</text>
+  <text class="fname" x="662" y="539">operator_name</text><text class="ftype" x="808" y="539">varchar(64)</text>
+  <text class="fname" x="662" y="558">record_content</text><text class="ftype" x="806" y="558">varchar(500)</text>
+
+  <!-- ===================== 关系：lab_room 1:N lab_asset ===================== -->
+  <path class="rel" d="M 260 99 H 330"/>
+  <path class="rel" d="M 320 91 L 330 99 M 320 99 L 330 99 M 320 107 L 330 99"/>
+  <text class="rlab" x="295" y="85" text-anchor="middle">1 : N</text>
+  <text class="note" x="295" y="122" text-anchor="middle">归属</text>
+
+  <!-- ===================== 关系：lab_asset 1:N lab_repair ===================== -->
+  <path class="rel" d="M 582 99 H 650"/>
+  <path class="rel" d="M 640 91 L 650 99 M 640 99 L 650 99 M 640 107 L 650 99"/>
+  <text class="rlab" x="616" y="85" text-anchor="middle">1 : N</text>
+  <text class="note" x="616" y="122" text-anchor="middle">报修</text>
+
+  <!-- ===================== 关系：lab_asset 1:N lab_asset_record ===================== -->
+  <path class="rel" d="M 456 261 V 360"/>
+  <path class="rel" d="M 448 350 L 456 360 M 456 350 L 456 360 M 464 350 L 456 360"/>
+  <text class="rlab" x="470" y="308">1 : N</text>
+  <text class="note" x="470" y="326">全生命周期履历</text>
+
+  <!-- ===================== 关系：lab_repair 1:N lab_repair_record ===================== -->
+  <path class="rel" d="M 786 318 V 400"/>
+  <path class="rel" d="M 778 390 L 786 400 M 786 390 L 786 400 M 794 390 L 786 400"/>
+  <text class="rlab" x="800" y="350">1 : N</text>
+  <text class="note" x="800" y="368">处理时间线</text>
+
+  <!-- ===================== 图例 ===================== -->
+  <rect x="950" y="180" width="190" height="196" rx="5" fill="#fbfaf8" stroke="#c9c3bb"/>
+  <text x="964" y="202" font-size="11.5" font-weight="bold" fill="#5b3f2f">图例</text>
+  <text class="key" x="964" y="224">PK</text><text class="note" x="992" y="224">主键（自增）</text>
+  <text class="key" x="964" y="244">FK</text><text class="note" x="992" y="244">外键字段（逻辑关联）</text>
+  <text class="rlab" x="964" y="270">1 : N</text><text class="note" x="1000" y="270">一对多</text>
+  <text class="note" x="964" y="296">关联字段只建索引，</text>
+  <text class="note" x="964" y="312">未建物理外键约束；</text>
+  <text class="note" x="964" y="328">一致性由服务层与</text>
+  <text class="note" x="964" y="344">事务保证。</text>
+  <text class="note" x="964" y="366" fill="#a0522d">本图只画关键字段，</text>
+  <text class="note" x="964" y="380" fill="#a0522d">完整字段见文档 7.2 节。</text>
+</svg>

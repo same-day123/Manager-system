@@ -1,0 +1,27 @@
+T1 单元测试验收 —— Tests run 汇总行（逐字摘录，未改动）
+来源日志：D:\code\Manager_system\.workbuddy\logs\t1-run2.log（第 37~58 行）
+命令：powershell -NoProfile -ExecutionPolicy Bypass -File .workbuddy\tools\mvnx.ps1 -o -B clean test
+运行时间：2026-09-17 20:53:58 ~ 20:55:44（Total time 01:46 min）
+
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.91 s - in com.ruoyi.project.laboratory.service.impl.LabAssetServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.43 s - in com.ruoyi.project.laboratory.service.impl.LabRepairServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.service.impl.LabRoomServiceImplTest
+[INFO] Running com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.ruoyi.project.laboratory.util.LabRoleUtilsTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 30, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:46 min
+[INFO] Finished at: 2026-09-17T20:55:44+08:00
+[INFO] ------------------------------------------------------------------------

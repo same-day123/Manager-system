@@ -1,0 +1,34 @@
+# ============================================================================
+# 集成测试专用「基础配置」——它存在的唯一目的，是挡住生产的
+# src/main/resources/application.yml，让测试环境不被生产配置牵着走。
+#
+# 【为什么需要它】生产 application.yml 里写着 `spring.profiles.active: druid`。
+# 万一 druid profile 被激活，application-druid.yml 就会加载，它把数据源描述成 MySQL
+# （spring.datasource.driverClassName=com.mysql.cj.jdbc.Driver +
+#   spring.datasource.druid.master.url=jdbc:mysql://localhost:3306/education_system）。
+# 失败模式不是「测试报错」那么省心：
+#   · 本机没起 MySQL → 构建失败（至少是响的，安全）；
+#   · 本机正好起着 MySQL → 这 7 个用例会连到开发库 education_system，
+#     而 @BeforeEach 会 delete from lab_room / lab_asset / lab_repair，
+#     等于把演示数据清空。这是「静默失败会毁掉演示数据」的配置，必须防。
+#
+# 【实测结论 —— 请如实读到这一句】
+# 实验做过：把本文件移出测试资源目录，跑
+#     mvnx.ps1 -o -B clean test -Dtest=LabAssetIntegrationTest
+# 日志输出 "The following 1 profile is active: \"integration\""，druid 并没有被激活，
+# 测试照样 2/2 全绿。也就是说 @ActiveProfiles("integration") 本身已经压住了配置里那个
+# spring.profiles.active，**本文件不是「缺了就过不去」的必需项，而是一层防御**。
+# 保留它的理由：上面那个失败模式的代价过高（清掉演示库）而多这一份文件的代价极低。
+# 若将来有人要删，请先重跑上面那条命令确认行为没变，再删。
+#
+# 【保留它的已知副作用（已接受）】测试期不再读生产 application.yml，
+# 于是只定义在生产那份里的占位符在测试 banner 中解析不出来，
+# 表现为 "Application Version: ${ruoyi.version}"。纯显示层；
+# laboratory 包内没有任何 @Value / @ConfigurationProperties 依赖生产配置项（已 grep 核实），
+# 故无功能影响。
+#
+# 真正的测试配置（H2 数据源 / MyBatis / 建表脚本）在 application-integration.yml。
+# ============================================================================
+spring:
+  profiles:
+    active: integration

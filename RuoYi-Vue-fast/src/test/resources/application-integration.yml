@@ -1,0 +1,40 @@
+# ============================================================================
+# 集成测试配置（profile: integration）
+#
+# 跑在 H2 1.4.199 内存库上，本地 / CI 都不需要装 MySQL 或 Redis。
+# H2 的版本必须写死 1.4.199（见 pom.xml 的 test scope 依赖）：
+# Spring Boot 2.5.15 的依赖管理指向 1.4.200，而本机离线仓库只有 1.4.199。
+#
+# 【注意】context 里实际的连接池是 Druid，不是 Spring Boot 默认的 Hikari：
+# druid-spring-boot-starter 在 classpath 上，DruidDataSourceAutoConfigure 会建
+# DruidDataSource，而 spring.datasource.druid.* 没配 URL 时它回落到 spring.datasource.url，
+# 也就是下面这个 H2 URL。所以数据仍然落在 H2 上，Druid 只是包了一层。
+# 实测证据：.workbuddy/logs/t2-run1.log 第 67~69 行 Init DruidDataSource / {dataSource-1} inited。
+# ============================================================================
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    # MODE=MySQL：让 H2 认识反引号、`key idx_xxx (...)` 这类 MySQL 写法
+    # DATABASE_TO_LOWER=TRUE：H2 默认把标识符转大写，而 mapper XML 里写的是小写
+    #   lab_asset，少了这个参数会报 Table LAB_ASSET not found
+    # DB_CLOSE_DELAY=-1：内存库在最后一个连接关闭后不销毁，否则后续用例报表不存在
+    url: jdbc:h2:mem:labtest;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  sql:
+    init:
+      # 每次上下文启动都执行建表脚本；脚本用的是 create table if not exists，可重复执行
+      mode: always
+      schema-locations: classpath:sql/lab-schema-h2.sql
+
+mybatis:
+  # 只指到 laboratory 包：mapper XML 里 resultMap type="LabRepair" 这类短别名靠它解析
+  typeAliasesPackage: com.ruoyi.project.laboratory.domain
+  mapperLocations: classpath*:mybatis/laboratory/*Mapper.xml
+  configLocation: classpath:mybatis/mybatis-config.xml
+
+logging:
+  level:
+    # 打开 mapper 的 debug 日志，构建日志里能直接看到真实执行的 SQL 与命中行数，
+    # 这是「集成测试确实打到了数据库」最直接的证据（《测试文档》截图用得上）
+    com.ruoyi.project.laboratory: debug

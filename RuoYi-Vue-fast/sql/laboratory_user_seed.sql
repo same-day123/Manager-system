@@ -6,19 +6,19 @@
 --       laboratory_demo_seed.sql（资产与房间）
 -- 幂等：是（全部使用 where not exists 判定，可重复执行）
 -- 目标库：education_system
--- 说明：密码统一为 123456，此处存的是 BCrypt 密文
+-- 说明：密码统一为 admin123，此处存的是 BCrypt 密文（复用若依原生 admin 账号的哈希）
 --       报修单为什么放在本文件而不是 [4/7]：报修单要按 user_name 解析申请人与
 --       维修人，而 6 个演示账号在本文件才创建（若依 sys_user 是自增主键，
 --       写死 ID 会在新库上错位），所以只能排在账号创建之后。
 -- ============================================================================
 --
 -- 演示账号一览：
---   labadmin / 123456    实验室管理员
---   asset01  / 123456    资产管理员
---   repair01 / 123456    维修工程师
---   room01   / 123456    房间管理员
---   student1 / 123456    学生助管
---   viewer01 / 123456    实验室观察员
+--   labadmin / admin123   实验室管理员
+--   asset01  / admin123   资产管理员
+--   repair01 / admin123   维修工程师
+--   room01   / admin123   房间管理员
+--   student1 / admin123   学生助管
+--   viewer01 / admin123   实验室观察员
 
 set @default_password := '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2';
 set @dept_rd := (select dept_id from sys_dept where dept_name = '研发部门' limit 1);
